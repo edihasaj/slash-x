@@ -29,8 +29,8 @@ function parseList(listResult: any): TwitterList | null {
         owner: owner
             ? {
                 id: owner.rest_id ?? '',
-                username: owner.legacy?.screen_name ?? '',
-                name: owner.legacy?.name ?? '',
+                username: owner.core?.screen_name ?? owner.legacy?.screen_name ?? '',
+                name: owner.core?.name ?? owner.legacy?.name ?? '',
             }
             : undefined,
     };
@@ -115,12 +115,18 @@ export function withLists<TBase extends AbstractConstructor<TwitterClientBase>>(
                         }
                         // biome-ignore lint/suspicious/noExplicitAny: API response shape
                         const data = (await response.json()) as any;
+                        // X returns 200 with partial { data, errors } when peripheral fields
+                        // (e.g. default_banner_media_results.result) fail to decode.
+                        // Trust extracted lists; only surface errors when no data came through.
+                        const instructions = data.data?.user?.result?.timeline?.timeline?.instructions;
+                        const lists = parseListsFromInstructions(instructions);
+                        if (lists.length > 0) {
+                            return { success: true, lists, had404 };
+                        }
                         if (data.errors && data.errors.length > 0) {
                             // biome-ignore lint/suspicious/noExplicitAny: error shape
                             return { success: false, error: data.errors.map((e: any) => e.message).join(', '), had404 };
                         }
-                        const instructions = data.data?.user?.result?.timeline?.timeline?.instructions;
-                        const lists = parseListsFromInstructions(instructions);
                         return { success: true, lists, had404 };
                     }
                     catch (error) {
@@ -182,12 +188,16 @@ export function withLists<TBase extends AbstractConstructor<TwitterClientBase>>(
                         }
                         // biome-ignore lint/suspicious/noExplicitAny: API response
                         const data = (await response.json()) as any;
+                        // Same partial-success handling as getOwnedLists.
+                        const instructions = data.data?.user?.result?.timeline?.timeline?.instructions;
+                        const lists = parseListsFromInstructions(instructions);
+                        if (lists.length > 0) {
+                            return { success: true, lists, had404 };
+                        }
                         if (data.errors && data.errors.length > 0) {
                             // biome-ignore lint/suspicious/noExplicitAny: error shape
                             return { success: false, error: data.errors.map((e: any) => e.message).join(', '), had404 };
                         }
-                        const instructions = data.data?.user?.result?.timeline?.timeline?.instructions;
-                        const lists = parseListsFromInstructions(instructions);
                         return { success: true, lists, had404 };
                     }
                     catch (error) {
