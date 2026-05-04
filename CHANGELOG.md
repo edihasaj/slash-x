@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.0.0
+
+First stable release. Drops the `-local.*` pre-release line; future versions follow standard semver from here.
 
 - TypeScript source tree under `src/`; `tsc` emits `dist/`. `dist/` is the built artifact, source-of-truth lives in `src/`.
 - Reorganized internals: `twitter-client-*` consolidated into `src/twitter/` (prefix dropped), runtime helpers in `src/runtime/`, JSON data in `src/data/`, ID extractors in `src/lib/extract/`.
@@ -8,7 +10,8 @@
 - Flipped `slash news` → `slash trending` as primary; `news` kept as alias.
 - `slash --version` now prefixes "slash-x" for parity with `brew test`.
 - Reworked `slash --help` with section groups (Writing/Reading/Discovery/Feeds/Users/Lists/Account/Maintenance) and updated banner.
-- Added Homebrew formula packaging: `packaging/homebrew/Formula/slash-x.rb.template`, `scripts/render-homebrew-formula.mjs`, `.github/workflows/release.yml` to publish to `edihasaj/homebrew-tap` on tag.
+- Homebrew formula installable via `brew install edihasaj/tap/slash-x`. Release workflow builds runtime tarball (with bundled prod `node_modules`) and publishes to `edihasaj/homebrew-tap` on tag.
+- Fixed `slash lists` and `slash list-timeline`: accept partial-success responses where X returns 200 with field-level errors on `default_banner_media_results.result`. Owner `screen_name`/`name` now read from new `user.core` path with `legacy` fallback.
 
 ## 0.8.0-local.1
 
