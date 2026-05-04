@@ -1,0 +1,23 @@
+{
+	"name": "sweet-cookie-local",
+	"version": "0.1.0",
+	"description": "Vendored browser cookie extraction helper for slash-x.",
+	"license": "MIT",
+	"type": "module",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js"
+		}
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}
