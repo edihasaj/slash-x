@@ -1,9 +1,7 @@
-// ABOUTME: CLI command for fetching Twitter Lists.
-// ABOUTME: Supports listing owned lists, memberships, and list timelines.
 import { parsePaginationFlags } from '../cli/pagination.js';
-import { extractListId } from '../lib/extract-list-id.js';
+import { extractListId } from '../lib/extract/list-id.js';
 import { hyperlink } from '../lib/output.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 function printLists(lists, ctx) {
     if (lists.length === 0) {
         console.log('No lists found.');
@@ -31,6 +29,7 @@ export function registerListsCommand(program, ctx) {
         .option('--member-of', 'Show lists you are a member of (instead of owned lists)')
         .option('-n, --count <number>', 'Number of lists to fetch', '100')
         .option('--json', 'Output as JSON')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -73,6 +72,7 @@ export function registerListsCommand(program, ctx) {
         .option('--cursor <string>', 'Resume pagination from a cursor')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (listIdOrUrl, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);

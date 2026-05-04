@@ -1,4 +1,4 @@
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 function formatPostCount(count) {
     if (count >= 1_000_000) {
         return `${(count / 1_000_000).toFixed(1)}M`;
@@ -36,7 +36,6 @@ function printNewsItems(items, ctx, opts = {}) {
         if (item.url) {
             console.log(`  ${ctx.l('url')}${item.url}`);
         }
-        // Print related tweets if available
         if (item.tweets && item.tweets.length > 0) {
             console.log(`  ${ctx.colors.section('Related tweets:')}`);
             const tweetLimit = opts.tweetLimit ?? item.tweets.length;
@@ -63,6 +62,7 @@ export function registerNewsCommand(program, ctx) {
         .option('--trending-only', 'Fetch only from Trending tab')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -85,7 +85,6 @@ export function registerNewsCommand(program, ctx) {
             console.error(`${ctx.p('err')}Missing required credentials`);
             process.exit(1);
         }
-        // Determine which tabs to fetch from
         const tabs = [];
         if (cmdOpts.forYou) {
             tabs.push('forYou');
@@ -102,7 +101,6 @@ export function registerNewsCommand(program, ctx) {
         if (cmdOpts.trendingOnly) {
             tabs.push('trending');
         }
-        // If no specific tabs selected, use defaults (all tabs except trending)
         const tabsToFetch = tabs.length > 0 ? tabs : undefined;
         const client = new TwitterClient({ cookies, timeoutMs, quoteDepth });
         const includeRaw = cmdOpts.jsonFull ?? false;

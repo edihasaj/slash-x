@@ -1,4 +1,4 @@
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerHomeCommand(program, ctx) {
     program
         .command('home')
@@ -7,6 +7,7 @@ export function registerHomeCommand(program, ctx) {
         .option('--following', 'Get "Following" feed (chronological) instead of "For You"')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);

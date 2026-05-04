@@ -30,13 +30,21 @@
   "scripts": {
     "start": "node dist/cli.js",
     "slash": "node dist/cli.js",
-    "check": "node dist/cli.js --help"
+    "check": "node dist/cli.js --help",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
     "sweet-cookie-local": "file:vendor/sweet-cookie",
     "commander": "^14.0.2",
     "json5": "^2.2.3",
     "kleur": "^4.1.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
   },
   "engines": {
     "node": ">=22"

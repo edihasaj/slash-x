@@ -1,6 +1,6 @@
 import { parsePaginationFlags } from '../cli/pagination.js';
 import { formatStatsLine } from '../lib/output.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerReadCommands(program, ctx) {
     program
         .command('read')
@@ -8,6 +8,7 @@ export function registerReadCommands(program, ctx) {
         .argument('<tweet-id-or-url>', 'Tweet ID or URL to read')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (tweetIdOrUrl, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -48,6 +49,7 @@ export function registerReadCommands(program, ctx) {
         .option('--cursor <string>', 'Resume pagination from a cursor')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (tweetIdOrUrl, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -83,7 +85,6 @@ export function registerReadCommands(program, ctx) {
                 usePagination: pagination.usePagination,
                 emptyMessage: 'No replies found.',
             });
-            // Show pagination hint if there's more
             if (result.nextCursor && !isJson) {
                 console.error(`${ctx.p('info')}More replies available. Use --cursor "${result.nextCursor}" to continue.`);
             }
@@ -103,6 +104,7 @@ export function registerReadCommands(program, ctx) {
         .option('--cursor <string>', 'Resume pagination from a cursor')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (tweetIdOrUrl, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -138,7 +140,6 @@ export function registerReadCommands(program, ctx) {
                 usePagination: pagination.usePagination,
                 emptyMessage: 'No thread tweets found.',
             });
-            // Show pagination hint if there's more
             if (result.nextCursor && !isJson) {
                 console.error(`${ctx.p('info')}More thread tweets available. Use --cursor "${result.nextCursor}" to continue.`);
             }

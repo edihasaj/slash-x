@@ -1,0 +1,230 @@
+import { normalizeHandle } from '../lib/normalize-handle.js';
+import type { AbstractConstructor, Mixin, TwitterClientBase } from './base.js';
+import { TWITTER_API_BASE } from './constants.js';
+import type { AboutAccountResult } from './types.js';
+/** Result of username to userId lookup */
+export interface UserLookupResult {
+    success: boolean;
+    userId?: string;
+    username?: string;
+    name?: string;
+    error?: string;
+}
+export interface TwitterClientUserLookupMethods {
+    getUserIdByUsername(username: string): Promise<UserLookupResult>;
+    getUserAboutAccount(username: string): Promise<AboutAccountResult>;
+}
+export function withUserLookup<TBase extends AbstractConstructor<TwitterClientBase>>(Base: TBase): Mixin<TBase, TwitterClientUserLookupMethods> {
+    abstract class TwitterClientUserLookup extends Base {
+        // biome-ignore lint/complexity/noUselessConstructor lint/suspicious/noExplicitAny: TS mixin constructor requirement.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        constructor(...args: any[]) {
+            super(...args);
+        }
+        async getUserByScreenNameGraphQL(screenName: string): Promise<UserLookupResult> {
+            const queryIds = ['xc8f1g7BYqr6VTzTbvNlGw', 'qW5u-DAuXpMEG0zA1F7UGQ', 'sLVLhk0bGj3MVFEKTdax1w'];
+            const variables = {
+                screen_name: screenName,
+                withSafetyModeUserFields: true,
+            };
+            const features = {
+                hidden_profile_subscriptions_enabled: true,
+                hidden_profile_likes_enabled: true,
+                rweb_tipjar_consumption_enabled: true,
+                responsive_web_graphql_exclude_directive_enabled: true,
+                verified_phone_label_enabled: false,
+                subscriptions_verification_info_is_identity_verified_enabled: true,
+                subscriptions_verification_info_verified_since_enabled: true,
+                highlights_tweets_tab_ui_enabled: true,
+                responsive_web_twitter_article_notes_tab_enabled: true,
+                subscriptions_feature_can_gift_premium: true,
+                creator_subscriptions_tweet_preview_api_enabled: true,
+                responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+                responsive_web_graphql_timeline_navigation_enabled: true,
+                blue_business_profile_image_shape_enabled: true,
+            };
+            const fieldToggles = {
+                withAuxiliaryUserLabels: false,
+            };
+            const params = new URLSearchParams({
+                variables: JSON.stringify(variables),
+                features: JSON.stringify(features),
+                fieldToggles: JSON.stringify(fieldToggles),
+            });
+            let lastError: string | undefined;
+            for (const queryId of queryIds) {
+                const url = `${TWITTER_API_BASE}/${queryId}/UserByScreenName?${params.toString()}`;
+                try {
+                    const response = await this.fetchWithTimeout(url, {
+                        method: 'GET',
+                        headers: this.getHeaders(),
+                    });
+                    if (!response.ok) {
+                        const text = await response.text();
+                        if (response.status === 404) {
+                            lastError = `HTTP ${response.status}`;
+                            continue;
+                        }
+                        lastError = `HTTP ${response.status}: ${text.slice(0, 200)}`;
+                        continue;
+                    }
+                    // biome-ignore lint/suspicious/noExplicitAny: API response
+                    const data = (await response.json()) as any;
+                    if (data.data?.user?.result?.__typename === 'UserUnavailable') {
+                        return { success: false, error: `User @${screenName} not found or unavailable` };
+                    }
+                    const userResult = data.data?.user?.result;
+                    const userId = userResult?.rest_id;
+                    const username = userResult?.legacy?.screen_name ?? userResult?.core?.screen_name;
+                    const name = userResult?.legacy?.name ?? userResult?.core?.name;
+                    if (userId && username) {
+                        return {
+                            success: true,
+                            userId,
+                            username,
+                            name,
+                        };
+                    }
+                    if (data.errors && data.errors.length > 0) {
+                        // biome-ignore lint/suspicious/noExplicitAny: error shape
+                        lastError = data.errors.map((e: any) => e.message).join(', ');
+                        continue;
+                    }
+                    lastError = 'Could not parse user data from response';
+                }
+                catch (error) {
+                    lastError = error instanceof Error ? error.message : String(error);
+                }
+            }
+            return { success: false, error: lastError ?? 'Unknown error looking up user' };
+        }
+        async getUserIdByUsername(username: string): Promise<UserLookupResult> {
+            const cleanUsername = normalizeHandle(username);
+            if (!cleanUsername) {
+                return { success: false, error: `Invalid username: ${username}` };
+            }
+            const graphqlResult = await this.getUserByScreenNameGraphQL(cleanUsername);
+            if (graphqlResult.success) {
+                return graphqlResult;
+            }
+            if (graphqlResult.error?.includes('not found or unavailable')) {
+                return graphqlResult;
+            }
+            const urls = [
+                `https://x.com/i/api/1.1/users/show.json?screen_name=${encodeURIComponent(cleanUsername)}`,
+                `https://api.twitter.com/1.1/users/show.json?screen_name=${encodeURIComponent(cleanUsername)}`,
+            ];
+            let lastError = graphqlResult.error;
+            for (const url of urls) {
+                try {
+                    const response = await this.fetchWithTimeout(url, {
+                        method: 'GET',
+                        headers: this.getHeaders(),
+                    });
+                    if (!response.ok) {
+                        const text = await response.text();
+                        if (response.status === 404) {
+                            return { success: false, error: `User @${cleanUsername} not found` };
+                        }
+                        lastError = `HTTP ${response.status}: ${text.slice(0, 200)}`;
+                        continue;
+                    }
+                    const data = (await response.json()) as { id_str?: string; id?: string | number; screen_name?: string; name?: string };
+                    const userId = data.id_str ?? (data.id ? String(data.id) : null);
+                    if (!userId) {
+                        lastError = 'Could not parse user ID from response';
+                        continue;
+                    }
+                    return {
+                        success: true,
+                        userId,
+                        username: data.screen_name ?? cleanUsername,
+                        name: data.name,
+                    };
+                }
+                catch (error) {
+                    lastError = error instanceof Error ? error.message : String(error);
+                }
+            }
+            return { success: false, error: lastError ?? 'Unknown error looking up user' };
+        }
+        async getAboutAccountQueryIds(): Promise<string[]> {
+            const primary = await this.getQueryId('AboutAccountQuery');
+            return Array.from(new Set([primary, 'zs_jFPFT78rBpXv9Z3U2YQ']));
+        }
+        async getUserAboutAccount(username: string): Promise<AboutAccountResult> {
+            const cleanUsername = normalizeHandle(username);
+            if (!cleanUsername) {
+                return { success: false, error: `Invalid username: ${username}` };
+            }
+            const variables = {
+                screenName: cleanUsername,
+            };
+            const params = new URLSearchParams({
+                variables: JSON.stringify(variables),
+            });
+            // biome-ignore lint/suspicious/noExplicitAny: result shape
+            const tryOnce = async (): Promise<any> => {
+                let lastError: string | undefined;
+                let had404 = false;
+                const queryIds = await this.getAboutAccountQueryIds();
+                for (const queryId of queryIds) {
+                    const url = `${TWITTER_API_BASE}/${queryId}/AboutAccountQuery?${params.toString()}`;
+                    try {
+                        const response = await this.fetchWithTimeout(url, {
+                            method: 'GET',
+                            headers: this.getHeaders(),
+                        });
+                        if (!response.ok) {
+                            const text = await response.text();
+                            if (response.status === 404) {
+                                had404 = true;
+                                lastError = `HTTP ${response.status}`;
+                                continue;
+                            }
+                            lastError = `HTTP ${response.status}: ${text.slice(0, 200)}`;
+                            continue;
+                        }
+                        // biome-ignore lint/suspicious/noExplicitAny: API response
+                        const data = (await response.json()) as any;
+                        if (data.errors && data.errors.length > 0) {
+                            // biome-ignore lint/suspicious/noExplicitAny: error shape
+                            lastError = data.errors.map((e: any) => e.message).join(', ');
+                            continue;
+                        }
+                        const aboutProfile = data.data?.user_result_by_screen_name?.result?.about_profile;
+                        if (!aboutProfile) {
+                            lastError = 'Missing about_profile in response';
+                            continue;
+                        }
+                        return {
+                            success: true,
+                            aboutProfile: {
+                                accountBasedIn: aboutProfile.account_based_in,
+                                source: aboutProfile.source,
+                                createdCountryAccurate: aboutProfile.created_country_accurate,
+                                locationAccurate: aboutProfile.location_accurate,
+                                learnMoreUrl: aboutProfile.learn_more_url,
+                            },
+                            had404,
+                        };
+                    }
+                    catch (error) {
+                        lastError = error instanceof Error ? error.message : String(error);
+                    }
+                }
+                return {
+                    success: false,
+                    error: lastError ?? 'Unknown error fetching account details',
+                    had404,
+                };
+            };
+            const { result } = await this.withRefreshedQueryIdsOn404(tryOnce);
+            if (result.success) {
+                return { success: true, aboutProfile: result.aboutProfile };
+            }
+            return { success: false, error: result.error };
+        }
+    }
+    return TwitterClientUserLookup as unknown as Mixin<TBase, TwitterClientUserLookupMethods>;
+}

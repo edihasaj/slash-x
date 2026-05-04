@@ -1,7 +1,7 @@
 import { parsePaginationFlags } from '../cli/pagination.js';
-import { extractBookmarkFolderId } from '../lib/extract-bookmark-folder-id.js';
+import { extractBookmarkFolderId } from '../lib/extract/bookmark-folder-id.js';
 import { addThreadMetadata, filterAuthorChain, filterAuthorOnly, filterFullChain } from '../lib/thread-filters.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerBookmarksCommand(program, ctx) {
     program
         .command('bookmarks')
@@ -21,6 +21,7 @@ export function registerBookmarksCommand(program, ctx) {
         .option('--sort-chronological', 'Sort output globally oldest -> newest')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -162,6 +163,7 @@ export function registerBookmarksCommand(program, ctx) {
             }
             expandedResults.push(...outputTweets);
         }
+        // biome-ignore lint/suspicious/noExplicitAny: thread metadata returns enriched shape
         let finalResults = expandedResults;
         if (includeMeta) {
             finalResults = expandedResults.map((tweet) => {

@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { type CookieSource, resolveCredentials } from '../lib/cookies.js';
 import { labelPrefix, type OutputConfig, statusPrefix } from '../lib/output.js';
-import type { TweetData } from '../lib/twitter-client.js';
+import type { TweetData } from '../twitter/client.js';
 export type BirdConfig = {
     chromeProfile?: string;
     chromeProfileDir?: string;
@@ -62,7 +62,6 @@ export type CliContext = {
     }) => void;
     extractTweetId: (tweetIdOrUrl: string) => string;
 };
-export declare const collectCookieSource: (value: string, previous?: CookieSource[]) => CookieSource[];
 type CredentialsOptions = {
     authToken?: string;
     ct0?: string;
@@ -72,6 +71,7 @@ type CredentialsOptions = {
     cookieSource?: CookieSource[];
     cookieTimeout?: string | number;
 };
+export declare const collectCookieSource: (value: string, previous?: CookieSource[]) => CookieSource[];
 export declare function createCliContext(normalizedArgs: string[], env?: NodeJS.ProcessEnv): CliContext;
 export {};
 //# sourceMappingURL=shared.d.ts.map

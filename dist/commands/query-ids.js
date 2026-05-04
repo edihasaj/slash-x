@@ -1,5 +1,5 @@
-import { getFeatureOverridesSnapshot, refreshFeatureOverridesCache, } from '../lib/runtime-features.js';
-import { runtimeQueryIds } from '../lib/runtime-query-ids.js';
+import { getFeatureOverridesSnapshot, refreshFeatureOverridesCache, } from '../runtime/features.js';
+import { runtimeQueryIds } from '../runtime/query-ids.js';
 function countFeatureOverrides(overrides) {
     let count = 0;
     if (overrides.global) {
@@ -18,6 +18,7 @@ export function registerQueryIdsCommand(program, ctx) {
         .description('Show or refresh cached Twitter GraphQL query IDs')
         .option('--json', 'Output as JSON')
         .option('--fresh', 'Force refresh (downloads X client bundles)', false)
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const operations = [
             'CreateTweet',

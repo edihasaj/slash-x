@@ -1,5 +1,5 @@
 import { normalizeHandle } from '../lib/normalize-handle.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 function formatAboutProfile(profile, ctx, handle) {
     const lines = [`${ctx.p('info')}Account information for @${handle}:`];
     if (profile.accountBasedIn) {
@@ -42,6 +42,7 @@ async function resolveUserIdOrExit(client, requestedUserId, ctx) {
     }
     return currentUser.user.id;
 }
+// biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
 async function runUserListCommand(program, ctx, spec, cmdOpts) {
     const opts = program.opts();
     const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -153,6 +154,7 @@ export function registerUserCommands(program, ctx) {
             .option('--all', 'Fetch all users (paginate automatically)')
             .option('--max-pages <number>', 'Stop after N pages when using --all')
             .option('--json', 'Output as JSON')
+            // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
             .action(async (cmdOpts) => runUserListCommand(program, ctx, spec, cmdOpts));
     };
     registerUserListCommand({
@@ -174,6 +176,7 @@ export function registerUserCommands(program, ctx) {
         .option('--cursor <string>', 'Resume pagination from a cursor')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -258,6 +261,7 @@ export function registerUserCommands(program, ctx) {
         .description('Get account origin and location information for a user')
         .argument('<username>', 'Twitter username (with or without @)')
         .option('--json', 'Output as JSON')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (username, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);

@@ -1,4 +1,4 @@
-import type { TweetData, TweetWithMeta } from './twitter-client-types.js';
+import type { TweetData, TweetWithMeta } from '../twitter/types.js';
 export declare function filterAuthorChain(tweets: TweetData[], bookmarkedTweet: TweetData): TweetData[];
 export declare function filterAuthorOnly(tweets: TweetData[], bookmarkedTweet: TweetData): TweetData[];
 export declare function filterFullChain(tweets: TweetData[], bookmarkedTweet: TweetData, options?: {

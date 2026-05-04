@@ -1,6 +1,6 @@
 import { parseNonNegativeIntFlag, parsePositiveIntFlag } from '../cli/pagination.js';
 import { normalizeHandle } from '../lib/normalize-handle.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerUserTweetsCommand(program, ctx) {
     const formatExample = (cmd, desc) => `  ${ctx.colors.command(cmd)}\n    ${ctx.colors.muted(desc)}`;
     program
@@ -21,6 +21,7 @@ export function registerUserTweetsCommand(program, ctx) {
         formatExample('slash user-tweets @hasajedi --json', 'Output as JSON'),
         formatExample('slash user-tweets @hasajedi --cursor "DAABCg..."', 'Resume from cursor'),
     ].join('\n')}`)
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (handle, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -38,7 +39,6 @@ export function registerUserTweetsCommand(program, ctx) {
             process.exit(2);
         }
         const pageDelayMs = delayParsed.value;
-        // Validate inputs
         if (!Number.isFinite(count) || count <= 0) {
             console.error(`${ctx.p('err')}Invalid --count. Expected a positive integer.`);
             process.exit(2);
@@ -54,7 +54,6 @@ export function registerUserTweetsCommand(program, ctx) {
             console.error(`${ctx.p('err')}Invalid --max-pages. Expected a positive integer (max: ${hardMaxPages}).`);
             process.exit(2);
         }
-        // Normalize handle (strip @ if present)
         const username = normalizeHandle(handle);
         if (!username) {
             console.error(`${ctx.p('err')}Invalid handle: ${handle}`);
@@ -69,7 +68,6 @@ export function registerUserTweetsCommand(program, ctx) {
             process.exit(1);
         }
         const client = new TwitterClient({ cookies, timeoutMs, quoteDepth });
-        // Look up user ID from username
         console.error(`${ctx.p('info')}Looking up @${username}...`);
         const userLookup = await client.getUserIdByUsername(username);
         if (!userLookup.success || !userLookup.userId) {
@@ -95,7 +93,6 @@ export function registerUserTweetsCommand(program, ctx) {
                 usePagination: wantsPaginationOutput,
                 emptyMessage: `No tweets found for @${username}.`,
             });
-            // Show pagination hint if there's more
             if (result.nextCursor && !cmdOpts.json && !cmdOpts.jsonFull) {
                 console.error(`${ctx.p('info')}More tweets available. Use --cursor "${result.nextCursor}" to continue.`);
             }

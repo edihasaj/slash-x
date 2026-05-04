@@ -1,4 +1,4 @@
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerUnbookmarkCommand(program, ctx) {
     program
         .command('unbookmark')

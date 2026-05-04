@@ -1,10 +1,9 @@
 import { normalizeHandle } from '../lib/normalize-handle.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 const ONLY_DIGITS_REGEX = /^\d+$/;
 async function resolveUserId(client, usernameOrId, ctx) {
     const raw = usernameOrId.trim();
     const isNumeric = ONLY_DIGITS_REGEX.test(raw);
-    // Otherwise, treat as username and look up
     const handle = normalizeHandle(raw);
     if (handle) {
         const lookup = await client.getUserIdByUsername(handle);

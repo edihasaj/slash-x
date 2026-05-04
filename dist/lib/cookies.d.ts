@@ -1,7 +1,3 @@
-/**
- * Browser cookie extraction for Twitter authentication.
- * Delegates to the vendored cookie helper for Safari/Chrome/Firefox reads.
- */
 export interface TwitterCookies {
     authToken: string | null;
     ct0: string | null;

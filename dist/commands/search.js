@@ -1,6 +1,6 @@
 import { parsePaginationFlags } from '../cli/pagination.js';
 import { mentionsQueryFromUserOption, normalizeHandle } from '../lib/normalize-handle.js';
-import { TwitterClient } from '../lib/twitter-client.js';
+import { TwitterClient } from '../twitter/client.js';
 export function registerSearchCommands(program, ctx) {
     program
         .command('search')
@@ -12,6 +12,7 @@ export function registerSearchCommands(program, ctx) {
         .option('--cursor <string>', 'Resume pagination from a cursor')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (query, cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -67,6 +68,7 @@ export function registerSearchCommands(program, ctx) {
         .option('-n, --count <number>', 'Number of tweets to fetch', '10')
         .option('--json', 'Output as JSON')
         .option('--json-full', 'Output as JSON with full raw API response in _raw field')
+        // biome-ignore lint/suspicious/noExplicitAny: cmd opts shape
         .action(async (cmdOpts) => {
         const opts = program.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);

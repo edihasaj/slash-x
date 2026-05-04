@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import JSON5 from 'json5';
 import kleur from 'kleur';
 import { resolveCredentials } from '../lib/cookies.js';
-import { extractTweetId } from '../lib/extract-tweet-id.js';
+import { extractTweetId } from '../lib/extract/tweet-id.js';
 import { hyperlink, labelPrefix, resolveOutputConfigFromArgv, resolveOutputConfigFromCommander, statusPrefix, } from '../lib/output.js';
 const COOKIE_SOURCES = ['safari', 'chrome', 'firefox'];
 function parseCookieSource(value) {
