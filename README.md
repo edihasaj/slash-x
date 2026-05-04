@@ -110,3 +110,7 @@ SLASH_DEBUG_BOOKMARKS
 - Uses browser cookie auth against X/Twitter web APIs.
 - Chrome cookie extraction is patched locally for slower macOS Keychain reads and Node 22 sqlite bigint support.
 - See `NOTICE.md` for required third-party license attribution.
+
+## Author
+
+Edi Hasaj <edihasaj@gmail.com> (https://github.com/edihasaj)

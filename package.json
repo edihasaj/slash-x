@@ -3,7 +3,7 @@
   "version": "0.8.0-local.1",
   "description": "Local X/Twitter CLI for posting, replying, and reading from the command line",
   "license": "MIT",
-  "author": "Edi Hasaj",
+  "author": "Edi Hasaj <edihasaj@gmail.com> (https://github.com/edihasaj)",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -23,6 +23,7 @@
     "vendor/sweet-cookie",
     "README.md",
     "CHANGELOG.md",
+    "AUTHORS.md",
     "NOTICE.md",
     "LICENSE"
   ],
