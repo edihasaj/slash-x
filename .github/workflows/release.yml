@@ -44,7 +44,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Package source tarball
+      - name: Prune to production deps
+        run: npm prune --omit=dev
+
+      - name: Package runtime tarball
         id: package
         shell: bash
         run: |
@@ -53,9 +56,10 @@ jobs:
           out_dir="dist-release"
           stage="$out_dir/slash-x-${version}"
           mkdir -p "$stage"
-          # Files needed to run + npm install in a Homebrew sandbox:
+          # Bundle everything needed to run, no install step at brew time:
           cp -R dist "$stage/"
           cp -R vendor "$stage/"
+          cp -R node_modules "$stage/"
           cp package.json package-lock.json "$stage/"
           cp README.md LICENSE NOTICE.md CHANGELOG.md AUTHORS.md "$stage/"
           tar -czf "$out_dir/slash-x-${version}.tar.gz" -C "$out_dir" "slash-x-${version}"
