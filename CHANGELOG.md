@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- TypeScript source tree under `src/`; `tsc` emits `dist/`. `dist/` is the built artifact, source-of-truth lives in `src/`.
+- Reorganized internals: `twitter-client-*` consolidated into `src/twitter/` (prefix dropped), runtime helpers in `src/runtime/`, JSON data in `src/data/`, ID extractors in `src/lib/extract/`.
+- Added `slash post tweet|reply` namespace; flat `slash tweet` / `slash reply` retained as aliases.
+- Flipped `slash news` → `slash trending` as primary; `news` kept as alias.
+- `slash --version` now prefixes "slash-x" for parity with `brew test`.
+- Reworked `slash --help` with section groups (Writing/Reading/Discovery/Feeds/Users/Lists/Account/Maintenance) and updated banner.
+- Added Homebrew formula packaging: `packaging/homebrew/Formula/slash-x.rb.template`, `scripts/render-homebrew-formula.mjs`, `.github/workflows/release.yml` to publish to `edihasaj/homebrew-tap` on tag.
+
 ## 0.8.0-local.1
 
 - Rebranded project metadata and docs for Edi's local `slash` CLI.

@@ -1,0 +1,19 @@
+class SlashX < Formula
+  desc "Local X/Twitter CLI for posting, replying, reading, and searching"
+  homepage "https://github.com/edihasaj/slash-x"
+  url "REPLACE_WITH_TARBALL_URL"
+  sha256 "REPLACE_WITH_TARBALL_SHA256"
+  license "MIT"
+  version "REPLACE_WITH_VERSION"
+
+  depends_on "node@22"
+
+  def install
+    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    bin.install_symlink Dir["#{libexec}/bin/*"]
+  end
+
+  test do
+    assert_match "slash-x", shell_output("#{bin}/slash --version 2>&1", 0)
+  end
+end

@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, for example v0.9.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: Build, release, publish Homebrew formula
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      HOMEBREW_TAP_REPO: edihasaj/homebrew-tap
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out release tag
+        if: github.event_name == 'workflow_dispatch'
+        run: git checkout "$RELEASE_TAG"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Package source tarball
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_TAG#v}"
+          out_dir="dist-release"
+          stage="$out_dir/slash-x-${version}"
+          mkdir -p "$stage"
+          # Files needed to run + npm install in a Homebrew sandbox:
+          cp -R dist "$stage/"
+          cp -R vendor "$stage/"
+          cp package.json package-lock.json "$stage/"
+          cp README.md LICENSE NOTICE.md CHANGELOG.md AUTHORS.md "$stage/"
+          tar -czf "$out_dir/slash-x-${version}.tar.gz" -C "$out_dir" "slash-x-${version}"
+          shasum -a 256 "$out_dir/slash-x-${version}.tar.gz" | tee "$out_dir/slash-x-${version}.tar.gz.sha256"
+          sha="$(cut -d ' ' -f 1 "$out_dir/slash-x-${version}.tar.gz.sha256")"
+          echo "tarball=$out_dir/slash-x-${version}.tar.gz" >> "$GITHUB_OUTPUT"
+          echo "sha_file=$out_dir/slash-x-${version}.tar.gz.sha256" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create release if needed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            exit 0
+          fi
+          gh release create "$RELEASE_TAG" --title "$RELEASE_TAG" --generate-notes
+
+      - name: Upload release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$RELEASE_TAG" \
+            "${{ steps.package.outputs.tarball }}" \
+            "${{ steps.package.outputs.sha_file }}" \
+            --clobber
+
+      - name: Check Homebrew tap access
+        id: homebrew
+        env:
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "${HOMEBREW_TAP_GITHUB_TOKEN:-}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::HOMEBREW_TAP_GITHUB_TOKEN is missing; skipping Homebrew tap publish"
+            exit 0
+          fi
+          code="$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $HOMEBREW_TAP_GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$HOMEBREW_TAP_REPO" || true)"
+          if [ "$code" != "200" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::HOMEBREW_TAP_GITHUB_TOKEN cannot access $HOMEBREW_TAP_REPO (HTTP $code); skipping Homebrew tap publish"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Publish Homebrew formula
+        if: steps.homebrew.outputs.skip != 'true'
+        env:
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          SLASH_X_TARBALL_SHA256: ${{ steps.package.outputs.sha }}
+          SLASH_X_RELEASE_TAG: ${{ env.RELEASE_TAG }}
+        run: |
+          set -euo pipefail
+          tap_url="https://x-access-token:${HOMEBREW_TAP_GITHUB_TOKEN}@github.com/${HOMEBREW_TAP_REPO}.git"
+          git clone "$tap_url" tap
+          mkdir -p tap/Formula
+          node scripts/render-homebrew-formula.mjs > tap/Formula/slash-x.rb
+          git -C tap config user.name "github-actions[bot]"
+          git -C tap config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C tap add Formula/slash-x.rb
+          if git -C tap diff --cached --quiet; then
+            echo "Homebrew formula already current"
+            exit 0
+          fi
+          git -C tap commit -m "Update slash-x ${RELEASE_TAG}"
+          git -C tap push

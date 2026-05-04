@@ -1,21 +1,32 @@
 # slash-x
 
-Edi's local X/Twitter CLI for tweeting, replying, reading, searching, timelines, bookmarks, and account checks.
+Edi's local X/Twitter CLI — post, read, search, follow, list.
 
 The command name is `slash`.
 
 ## Install
 
-Requires Node.js 22+.
+### Homebrew (recommended)
 
 ```bash
-cd ~/Projects/slash-x
+brew install edihasaj/tap/slash-x
+slash --help
+```
+
+Tap: <https://github.com/edihasaj/homebrew-tap>. Releases publish a Node-based formula automatically when tagged.
+
+### From source (Node.js 22+)
+
+```bash
+git clone https://github.com/edihasaj/slash-x.git
+cd slash-x
 npm install
+npm run build
 npm link
 slash --help
 ```
 
-No npm publish needed. `npm link` exposes the local `slash` binary on PATH.
+Source lives in `src/`; `npm run build` runs `tsc` and emits `dist/`. Use `npm run build:watch` while iterating.
 
 ## Common Commands
 
@@ -31,8 +42,14 @@ slash mentions -n 5
 slash user-tweets @hasajedi -n 20
 slash bookmarks -n 20
 slash likes -n 20
-slash tweet "hello from slash"
+
+# Posting (namespace + flat aliases — both forms work)
+slash post tweet "hello from slash-x"
+slash tweet "hello from slash-x"
+slash post reply <tweet-id-or-url> "nice thread"
 slash reply <tweet-id-or-url> "nice thread"
+
+slash trending -n 10        # alias: slash news
 slash query-ids --fresh
 ```
 
@@ -44,7 +61,7 @@ slash query-ids --fresh
 2. Env: `AUTH_TOKEN`, `CT0`, `TWITTER_AUTH_TOKEN`, `TWITTER_CT0`
 3. Browser cookies: Chrome, Safari, Firefox
 
-Edi's default local config prefers Chrome:
+Default local config prefers Chrome:
 
 ```json5
 {
@@ -104,9 +121,43 @@ SLASH_DEBUG_ARTICLE
 SLASH_DEBUG_BOOKMARKS
 ```
 
+## Project Layout
+
+```
+src/
+  cli.ts                 # entry
+  cli/                   # program, shared, pagination
+  commands/              # one file per command
+  twitter/               # GraphQL client (mixin cluster)
+  lib/                   # cookies, output, paginate-cursor, etc.
+  lib/extract/           # ID extractors
+  runtime/               # query-ids + features refresh
+  data/                  # baked-in JSON (query-ids, features)
+```
+
+`tsc` builds to `dist/`; `bin: dist/cli.js` is what `slash` resolves to.
+
+## Release
+
+Tag `vX.Y.Z` and push:
+
+```bash
+git tag v0.9.0
+git push origin v0.9.0
+```
+
+The `Release` workflow:
+
+1. Builds `dist/`
+2. Packs a tarball (`dist/`, `vendor/`, `package.json`, lockfile, docs)
+3. Creates a GitHub release and uploads the tarball + `.sha256`
+4. Renders `Formula/slash-x.rb` and pushes it to `edihasaj/homebrew-tap` (requires `HOMEBREW_TAP_GITHUB_TOKEN` repo secret)
+
+The local formula template lives at `packaging/homebrew/Formula/slash-x.rb.template`.
+
 ## Notes
 
-- Open source on GitHub, installed locally with `npm link`.
+- Open source on GitHub; Homebrew formula is the supported install path.
 - Uses browser cookie auth against X/Twitter web APIs.
 - Chrome cookie extraction is patched locally for slower macOS Keychain reads and Node 22 sqlite bigint support.
 - See `NOTICE.md` for required third-party license attribution.

@@ -17,13 +17,14 @@ async function uploadMediaOrExit(client: TwitterClient, media: MediaSpec[], ctx:
     }
     return uploaded;
 }
-export function registerPostCommands(program: Command, ctx: CliContext): void {
-    program
+export function registerPostCommands(parent: Command, ctx: CliContext, root?: Command): void {
+    const optsSource = root ?? parent;
+    parent
         .command('tweet')
         .description('Post a new tweet')
         .argument('<text>', 'Tweet text')
         .action(async (text: string) => {
-        const opts = program.opts();
+        const opts = optsSource.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
         const quoteDepth = ctx.resolveQuoteDepthFromOptions(opts);
         let media: MediaSpec[] = [];
@@ -57,13 +58,13 @@ export function registerPostCommands(program: Command, ctx: CliContext): void {
             process.exit(1);
         }
     });
-    program
+    parent
         .command('reply')
         .description('Reply to an existing tweet')
         .argument('<tweet-id-or-url>', 'Tweet ID or URL to reply to')
         .argument('<text>', 'Reply text')
         .action(async (tweetIdOrUrl: string, text: string) => {
-        const opts = program.opts();
+        const opts = optsSource.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
         const quoteDepth = ctx.resolveQuoteDepthFromOptions(opts);
         let media: MediaSpec[] = [];

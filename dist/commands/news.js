@@ -48,8 +48,8 @@ function printNewsItems(items, ctx, opts = {}) {
 }
 export function registerNewsCommand(program, ctx) {
     program
-        .command('news')
-        .alias('trending')
+        .command('trending')
+        .alias('news')
         .description('Fetch AI-curated news and trending topics from Explore tabs')
         .option('-n, --count <number>', 'Number of items to fetch', '10')
         .option('--ai-only', 'Show only AI-curated news items')

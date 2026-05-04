@@ -16,6 +16,7 @@ import { registerUserCommands } from '../commands/users.js';
 import { getCliVersion } from '../lib/version.js';
 import { collectCookieSource, type CliContext } from './shared.js';
 export const KNOWN_COMMANDS: Set<string> = new Set([
+    'post',
     'tweet',
     'reply',
     'query-ids',
@@ -35,11 +36,12 @@ export const KNOWN_COMMANDS: Set<string> = new Set([
     'list-timeline',
     'home',
     'user-tweets',
-    'news',
     'trending',
+    'news',
     'help',
     'whoami',
     'check',
+    'about',
 ]);
 export function createProgram(ctx: CliContext): Command {
     const program = new Command();
@@ -64,14 +66,34 @@ export function createProgram(ctx: CliContext): Command {
         previous.push(value);
         return previous;
     };
-    program.addHelpText('beforeAll', () => `${ctx.colors.banner('slash')} ${ctx.colors.muted(getCliVersion())} ${ctx.colors.subtitle('— fast X CLI for tweeting, replying, and reading')}`);
-    program.name('slash').description('Post tweets and replies via Twitter/X GraphQL API').version(getCliVersion());
+    program.addHelpText('beforeAll', () => `${ctx.colors.banner('slash-x')} ${ctx.colors.muted(getCliVersion())} ${ctx.colors.subtitle("— Edi's local X/Twitter CLI")}`);
+    program.name('slash').description("Edi's local X/Twitter CLI — post, read, search, follow, list").version(`slash-x ${getCliVersion()}`, '-V, --version', 'output the version number');
     const formatExample = (command: string, description: string): string => `${ctx.colors.command(`  ${command}`)}\n${ctx.colors.muted(`    ${description}`)}`;
-    program.addHelpText('afterAll', () => `\n${ctx.colors.section('Examples')}\n${[
-        formatExample('slash whoami', 'Show the logged-in account via GraphQL cookies'),
-        formatExample('slash --firefox-profile default-release whoami', 'Use Firefox profile cookies'),
-        formatExample('slash tweet "hello from slash"', 'Send a tweet'),
-        formatExample('slash 1234567890123456789 --json', 'Read a tweet (ID or URL shorthand for `read`) and print JSON'),
+    const groupedHelp = (): string => {
+        const groups: Array<{ title: string; lines: string[] }> = [
+            { title: 'Writing', lines: ['post tweet <text>          Post a new tweet (alias: tweet)', 'post reply <id> <text>     Reply to a tweet (alias: reply)'] },
+            { title: 'Reading', lines: ['read <id-or-url>           Read a tweet', 'thread <id-or-url>         Show full conversation', 'replies <id-or-url>        List replies'] },
+            { title: 'Discovery', lines: ['search <query>             Search tweets', 'mentions                   Tweets mentioning you', 'trending                   Trending + AI-curated news (alias: news)'] },
+            { title: 'Feeds', lines: ['home                       Your "For You" timeline', 'bookmarks                  Your bookmarks', 'likes                      Your likes'] },
+            { title: 'Users', lines: ['follow <user>              Follow a user', 'unfollow <user>            Unfollow a user', 'following [user]           Who you/they follow', 'followers [user]           Who follows you/them', 'user-tweets <handle>       Tweets from a profile', 'about <user>               Account origin & info'] },
+            { title: 'Lists', lines: ['lists                      Your lists', 'list-timeline <id-or-url>  Tweets from a list', 'unbookmark <id...>         Remove bookmarks'] },
+            { title: 'Account', lines: ['whoami                     Logged-in account', 'check                      Credential availability'] },
+            { title: 'Maintenance', lines: ['query-ids [--fresh]        Show/refresh GraphQL query IDs'] },
+        ];
+        return `\n${groups
+            .map((g) => `${ctx.colors.section(g.title)}\n${g.lines.map((l) => {
+                const [cmd, ...rest] = l.split(/\s{2,}/);
+                const desc = rest.join('  ');
+                return `  ${ctx.colors.command((cmd ?? '').padEnd(28))}${ctx.colors.muted(desc)}`;
+            }).join('\n')}`)
+            .join('\n\n')}`;
+    };
+    program.addHelpText('afterAll', () => `${groupedHelp()}\n\n${ctx.colors.section('Examples')}\n${[
+        formatExample('slash whoami', 'Show the logged-in X/Twitter account'),
+        formatExample('slash post tweet "hello from slash-x"', 'Post a tweet via the post namespace'),
+        formatExample('slash tweet "hello from slash-x"', 'Same — flat alias still works'),
+        formatExample('slash 1234567890123456789 --json', 'Tweet ID/URL shorthand reads the tweet as JSON'),
+        formatExample('slash --firefox-profile default-release whoami', 'Pick a specific browser profile for cookie auth'),
     ].join('\n\n')}\n\n${ctx.colors.section('Shortcuts')}\n${[
         formatExample('slash <tweet-id-or-url> [--json]', 'Shorthand for `slash read <tweet-id-or-url>`'),
     ].join('\n\n')}\n\n${ctx.colors.section('JSON Output')}\n${ctx.colors.muted(`  Add ${ctx.colors.option('--json')} to: read, replies, thread, search, mentions, bookmarks, likes, following, followers, about, lists, list-timeline, user-tweets, query-ids`)}\n${ctx.colors.muted(`  Add ${ctx.colors.option('--json-full')} to include raw API response in ${ctx.colors.argument('_raw')} field (tweet commands only)`)}\n${ctx.colors.muted(`  (Run ${ctx.colors.command('slash <command> --help')} to see per-command flags.)`)}`);
@@ -108,5 +130,7 @@ export function createProgram(ctx: CliContext): Command {
     registerUserTweetsCommand(program, ctx);
     registerNewsCommand(program, ctx);
     registerCheckCommand(program, ctx);
+    const post = program.command('post').description('Post tweets and replies (subcommands: tweet, reply)');
+    registerPostCommands(post, ctx, program);
     return program;
 }

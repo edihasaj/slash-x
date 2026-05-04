@@ -50,8 +50,8 @@ function printNewsItems(items: NewsItem[], ctx: CliContext, opts: { json?: boole
 }
 export function registerNewsCommand(program: Command, ctx: CliContext): void {
     program
-        .command('news')
-        .alias('trending')
+        .command('trending')
+        .alias('news')
         .description('Fetch AI-curated news and trending topics from Explore tabs')
         .option('-n, --count <number>', 'Number of items to fetch', '10')
         .option('--ai-only', 'Show only AI-curated news items')
