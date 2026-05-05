@@ -164,4 +164,4 @@ The local formula template lives at `packaging/homebrew/Formula/slash-x.rb.templ
 
 ## Author
 
-Edi Hasaj <edihasaj@gmail.com> (https://github.com/edihasaj)
+Edi Hasaj (https://edihasaj.com)
