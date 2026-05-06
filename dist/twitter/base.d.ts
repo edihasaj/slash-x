@@ -13,6 +13,8 @@ export declare abstract class TwitterClientBase {
     protected clientUuid: string;
     protected clientDeviceId: string;
     protected clientUserId?: string;
+    private clientTransaction?;
+    private clientTransactionPromise?;
     constructor(options: TwitterClientOptions);
     protected abstract getCurrentUser(): Promise<CurrentUserResult>;
     protected sleep(ms: number): Promise<void>;
@@ -30,6 +32,9 @@ export declare abstract class TwitterClientBase {
     protected fetchWithTimeout(url: string, init: RequestInit): Promise<Response>;
     protected getHeaders(): Record<string, string>;
     protected createTransactionId(): string;
+    private getClientTransaction;
+    protected generateTransactionId(method: string, path: string): Promise<string>;
+    protected withTransactionId(headers: Record<string, string>, method: string, urlOrPath: string): Promise<Record<string, string>>;
     protected getBaseHeaders(): Record<string, string>;
     protected getJsonHeaders(): Record<string, string>;
     protected getUploadHeaders(): Record<string, string>;

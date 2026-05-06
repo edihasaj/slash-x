@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID } from 'node:crypto';
+import { ClientTransaction, handleXMigration } from 'x-client-transaction-id';
 import { runtimeQueryIds } from '../runtime/query-ids.js';
 import { type OperationName, QUERY_IDS, TARGET_QUERY_ID_OPERATIONS } from './constants.js';
 import type { CurrentUserResult, TwitterClientOptions } from './types.js';
@@ -18,6 +19,8 @@ export abstract class TwitterClientBase {
     protected clientUuid: string;
     protected clientDeviceId: string;
     protected clientUserId?: string;
+    private clientTransaction?: ClientTransaction;
+    private clientTransactionPromise?: Promise<ClientTransaction | null>;
     constructor(options: TwitterClientOptions) {
         if (!options.cookies.authToken || !options.cookies.ct0) {
             throw new Error('Both authToken and ct0 cookies are required');
@@ -87,6 +90,52 @@ export abstract class TwitterClientBase {
     }
     protected createTransactionId(): string {
         return randomBytes(16).toString('hex');
+    }
+    private async getClientTransaction(): Promise<ClientTransaction | null> {
+        if (this.clientTransaction) {
+            return this.clientTransaction;
+        }
+        if (process.env.NODE_ENV === 'test') {
+            return null;
+        }
+        if (!this.clientTransactionPromise) {
+            this.clientTransactionPromise = (async () => {
+                try {
+                    const document = await handleXMigration();
+                    const transaction = await ClientTransaction.create(document);
+                    this.clientTransaction = transaction;
+                    return transaction;
+                }
+                catch {
+                    this.clientTransactionPromise = undefined;
+                    return null;
+                }
+            })();
+        }
+        return this.clientTransactionPromise;
+    }
+    protected async generateTransactionId(method: string, path: string): Promise<string> {
+        const transaction = await this.getClientTransaction();
+        if (!transaction) {
+            return this.createTransactionId();
+        }
+        try {
+            return await transaction.generateTransactionId(method.toUpperCase(), path);
+        }
+        catch {
+            return this.createTransactionId();
+        }
+    }
+    protected async withTransactionId(headers: Record<string, string>, method: string, urlOrPath: string): Promise<Record<string, string>> {
+        let path = urlOrPath;
+        try {
+            const url = new URL(urlOrPath);
+            path = url.pathname;
+        }
+        catch {
+            // already a path
+        }
+        return { ...headers, 'x-client-transaction-id': await this.generateTransactionId(method, path) };
     }
     protected getBaseHeaders(): Record<string, string> {
         const headers: Record<string, string> = {
