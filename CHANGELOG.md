@@ -2,7 +2,9 @@
 
 ## 1.2.0
 
-- Added `slash article` for publishing real X Articles (Premium+). Drives the four-step `ArticleEntityDraftCreate` → `ArticleEntityUpdateTitle` → `ArticleEntityUpdateContent` → `ArticleEntityPublish` pipeline against x.com's GraphQL endpoints, with `--title`, `--visibility`, `--conversation`, and `--dry-run` flags.
+- Added `slash article` for publishing real X Articles (Premium+). Drives the four-step `ArticleEntityDraftCreate` → `ArticleEntityUpdateTitle` → `ArticleEntityUpdateContent` → `ArticleEntityPublish` pipeline against x.com's GraphQL endpoints, with `--title`, `--visibility`, `--conversation`, `--draft`, and `--dry-run` flags.
+- Added `slash articles [user]` for listing a user's published X Articles (defaults to the current user). Uses the existing `UserArticlesTweets` query and reuses the standard timeline renderer.
+- `slash user-tweets` now enables `withArticlePlainText` / `withArticleRichContentState` so article tweets surface their title and rich body inline instead of appearing as empty entries.
 - Added a markdown → Draft.js content_state converter (`src/lib/markdown-to-draftjs.ts`) supporting paragraphs, `#`/`##`/`###` headings, `>` blockquotes, and `-`/`1.` lists; also strips YAML frontmatter and auto-extracts a title from the first `# heading` when one isn't passed.
 - Renamed the v1.1.0 `slash article` (CreateNoteTweet long post) to `slash long` / `slash post long`, since `article` is now the rich Article path.
 - Added a new `TwitterClientArticles` mixin and corresponding query IDs / features so the existing query-id refresh keeps the article mutations in sync with x.com bundles.

@@ -1,44 +1,20 @@
 import { TWITTER_API_BASE } from './constants.js';
-import { buildArticleEntityFeatures } from './features.js';
-function findRestId(node, seen = new WeakSet()) {
-    if (!node || typeof node !== 'object') {
-        return undefined;
-    }
-    const obj = node;
-    if (seen.has(obj)) {
-        return undefined;
-    }
-    seen.add(obj);
-    const rest = obj.rest_id;
-    if (typeof rest === 'string' && /^\d+$/.test(rest)) {
-        return rest;
-    }
-    for (const value of Object.values(obj)) {
-        const found = findRestId(value, seen);
-        if (found) {
-            return found;
-        }
-    }
-    return undefined;
+import { buildArticleFeatures, buildArticleFieldToggles, buildArticleEntityFeatures } from './features.js';
+import { extractCursorFromInstructions, parseTweetsFromInstructions } from './utils.js';
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary; checked at runtime.
+function pickRestId(value) {
+    return typeof value === 'string' && /^\d+$/.test(value) ? value : undefined;
 }
-function findTweetId(node) {
-    if (!node || typeof node !== 'object') {
-        return undefined;
-    }
-    const obj = node;
-    const tweetResults = obj.tweet_results;
-    if (tweetResults?.result?.rest_id) {
-        return tweetResults.result.rest_id;
-    }
-    for (const value of Object.values(obj)) {
-        if (value && typeof value === 'object') {
-            const found = findTweetId(value);
-            if (found) {
-                return found;
-            }
-        }
-    }
-    return undefined;
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary.
+function extractArticleEntityId(data) {
+    return (pickRestId(data?.articleentity_create_draft?.article_entity_results?.result?.rest_id) ??
+        pickRestId(data?.articleentity_publish?.article_entity_results?.result?.rest_id) ??
+        pickRestId(data?.articleentity_update_title?.rest_id) ??
+        pickRestId(data?.articleentity_update_content_state?.rest_id));
+}
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary.
+function extractPublishedTweetId(data) {
+    return pickRestId(data?.articleentity_publish?.article_entity_results?.result?.metadata?.tweet_results?.result?.rest_id);
 }
 export function withArticles(Base) {
     class TwitterClientArticles extends Base {
@@ -93,7 +69,7 @@ export function withArticles(Base) {
             if (!result.success || !result.data) {
                 return { success: false, error: result.error ?? 'Draft create failed without error' };
             }
-            const articleEntityId = findRestId(result.data);
+            const articleEntityId = extractArticleEntityId(result.data);
             if (!articleEntityId) {
                 return { success: false, error: `Draft create response missing rest_id: ${JSON.stringify(result.data).slice(0, 300)}` };
             }
@@ -111,8 +87,51 @@ export function withArticles(Base) {
             if (!result.success) {
                 return { success: false, error: result.error };
             }
-            const tweetId = findTweetId(result.data) ?? findRestId(result.data);
+            const tweetId = extractPublishedTweetId(result.data);
             return { success: true, data: { articleEntityId, tweetId } };
+        }
+        async getUserArticles(userId, options = {}) {
+            const { count = 20, cursor, includeRaw = false } = options;
+            const variables = {
+                userId,
+                count,
+                includePromotedContent: false,
+                withVoice: true,
+                withQuickPromoteEligibilityTweetFields: true,
+                withBirdwatchNotes: true,
+                withCommunity: true,
+                withSafetyModeUserFields: true,
+                withSuperFollowsUserFields: true,
+                withDownvotePerspective: false,
+                withReactionsMetadata: false,
+                withReactionsPerspective: false,
+                withSuperFollowsTweetFields: true,
+                withSuperFollowsReplyCount: false,
+                withClientEventToken: false,
+                ...(cursor ? { cursor } : {}),
+            };
+            const params = new URLSearchParams({
+                variables: JSON.stringify(variables),
+                features: JSON.stringify(buildArticleFeatures()),
+                fieldToggles: JSON.stringify({ ...buildArticleFieldToggles(), withArticlePlainText: true, withArticleRichContentState: true }),
+            });
+            const queryId = await this.getQueryId('UserArticlesTweets');
+            const url = `${TWITTER_API_BASE}/${queryId}/UserArticlesTweets?${params.toString()}`;
+            try {
+                const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.getHeaders() });
+                if (!response.ok) {
+                    return { success: false, error: `HTTP ${response.status}: ${(await response.text()).slice(0, 200)}` };
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: graphql response shape.
+                const data = (await response.json());
+                const instructions = data?.data?.user?.result?.timeline?.timeline?.instructions ?? [];
+                const tweets = parseTweetsFromInstructions(instructions, { quoteDepth: 0, includeRaw });
+                const nextCursor = extractCursorFromInstructions(instructions, 'Bottom');
+                return { success: true, tweets, nextCursor, ...(includeRaw ? { _raw: data } : {}) };
+            }
+            catch (error) {
+                return { success: false, error: error instanceof Error ? error.message : String(error) };
+            }
         }
     }
     return TwitterClientArticles;

@@ -126,6 +126,7 @@ export function registerPostCommands(parent, ctx, root) {
         .option('--visibility <setting>', 'Article visibility: Public, Followers, Subscribers, MentionedUsers, CommunityTweet', 'Public')
         .option('--conversation <mode>', 'Reply control: All, ByInvitation, Community, Verified, Subscribers, Following', 'ByInvitation')
         .option('--dry-run', 'Convert markdown to Draft.js content_state and print it; do not call X.', false)
+        .option('--draft', 'Create draft + set title + upload body, but skip the final publish step. Article stays in your X drafts.', false)
         .action(async (bodyArg, cmdOpts) => {
         const opts = optsSource.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -184,6 +185,12 @@ export function registerPostCommands(parent, ctx, root) {
         if (!contentResult.success) {
             console.error(`${ctx.p('err')}Content update failed: ${contentResult.error}`);
             process.exit(1);
+        }
+        if (cmdOpts.draft) {
+            console.log(`${ctx.p('ok')}Draft saved (not published). Review it in X under your articles.`);
+            console.log(`${ctx.p('info')}articleEntityId: ${articleEntityId}`);
+            console.log(`${ctx.p('info')}edit URL: https://x.com/i/articles/${articleEntityId}/edit`);
+            return;
         }
         console.error(`${ctx.p('info')}Body uploaded; publishing…`);
         const publishResult = await client.articlePublish(articleEntityId, cmdOpts.visibility, cmdOpts.conversation);

@@ -6,6 +6,7 @@ import { registerHelpCommand } from '../commands/help.js';
 import { registerHomeCommand } from '../commands/home.js';
 import { registerListsCommand } from '../commands/lists.js';
 import { registerNewsCommand } from '../commands/news.js';
+import { registerArticlesCommand } from '../commands/articles.js';
 import { registerPostCommands } from '../commands/post.js';
 import { registerQueryIdsCommand } from '../commands/query-ids.js';
 import { registerReadCommands } from '../commands/read.js';
@@ -75,7 +76,7 @@ export function createProgram(ctx) {
             { title: 'Reading', lines: ['read <id-or-url>           Read a tweet', 'thread <id-or-url>         Show full conversation', 'replies <id-or-url>        List replies'] },
             { title: 'Discovery', lines: ['search <query>             Search tweets', 'mentions                   Tweets mentioning you', 'trending                   Trending + AI-curated news (alias: news)'] },
             { title: 'Feeds', lines: ['home                       Your "For You" timeline', 'bookmarks                  Your bookmarks', 'likes                      Your likes'] },
-            { title: 'Users', lines: ['follow <user>              Follow a user', 'unfollow <user>            Unfollow a user', 'following [user]           Who you/they follow', 'followers [user]           Who follows you/them', 'user-tweets <handle>       Tweets from a profile', 'about <user>               Account origin & info'] },
+            { title: 'Users', lines: ['follow <user>              Follow a user', 'unfollow <user>            Unfollow a user', 'following [user]           Who you/they follow', 'followers [user]           Who follows you/them', 'user-tweets <handle>       Tweets from a profile', 'articles [user]            List a user\'s X Articles (default: you)', 'about <user>               Account origin & info'] },
             { title: 'Lists', lines: ['lists                      Your lists', 'list-timeline <id-or-url>  Tweets from a list', 'unbookmark <id...>         Remove bookmarks'] },
             { title: 'Account', lines: ['whoami                     Logged-in account', 'check                      Credential availability'] },
             { title: 'Maintenance', lines: ['query-ids [--fresh]        Show/refresh GraphQL query IDs'] },
@@ -128,6 +129,7 @@ export function createProgram(ctx) {
     registerHomeCommand(program, ctx);
     registerUserCommands(program, ctx);
     registerUserTweetsCommand(program, ctx);
+    registerArticlesCommand(program, ctx);
     registerNewsCommand(program, ctx);
     registerCheckCommand(program, ctx);
     const post = program.command('post').description('Post tweets and replies (subcommands: tweet, reply)');

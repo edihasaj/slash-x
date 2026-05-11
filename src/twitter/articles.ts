@@ -1,7 +1,9 @@
 import type { DraftContentState } from '../lib/markdown-to-draftjs.js';
 import type { AbstractConstructor, Mixin, TwitterClientBase } from './base.js';
 import { TWITTER_API_BASE } from './constants.js';
-import { buildArticleEntityFeatures } from './features.js';
+import { buildArticleFeatures, buildArticleFieldToggles, buildArticleEntityFeatures } from './features.js';
+import type { SearchResult } from './types.js';
+import { extractCursorFromInstructions, parseTweetsFromInstructions } from './utils.js';
 export type ArticleVisibility = 'Public' | 'Followers' | 'MentionedUsers' | 'CommunityTweet' | 'Subscribers';
 export type ArticleConversationMode = 'All' | 'ByInvitation' | 'Community' | 'Verified' | 'Subscribers' | 'Following';
 export interface ArticleMutationResult<TData = unknown> {
@@ -13,51 +15,32 @@ export interface ArticleDraftCreateResult extends ArticleMutationResult<{ articl
 }
 export interface ArticlePublishResult extends ArticleMutationResult<{ tweetId?: string; articleEntityId: string }> {
 }
+export interface UserArticlesOptions {
+    count?: number;
+    cursor?: string;
+    includeRaw?: boolean;
+}
 export interface TwitterClientArticleMethods {
     articleDraftCreate(): Promise<ArticleDraftCreateResult>;
     articleUpdateTitle(articleEntityId: string, title: string): Promise<ArticleMutationResult>;
     articleUpdateContent(articleEntityId: string, contentState: DraftContentState): Promise<ArticleMutationResult>;
     articlePublish(articleEntityId: string, visibility?: ArticleVisibility, conversationMode?: ArticleConversationMode): Promise<ArticlePublishResult>;
+    getUserArticles(userId: string, options?: UserArticlesOptions): Promise<SearchResult>;
 }
-function findRestId(node: unknown, seen = new WeakSet<object>()): string | undefined {
-    if (!node || typeof node !== 'object') {
-        return undefined;
-    }
-    const obj = node as Record<string, unknown>;
-    if (seen.has(obj)) {
-        return undefined;
-    }
-    seen.add(obj);
-    const rest = obj.rest_id;
-    if (typeof rest === 'string' && /^\d+$/.test(rest)) {
-        return rest;
-    }
-    for (const value of Object.values(obj)) {
-        const found = findRestId(value, seen);
-        if (found) {
-            return found;
-        }
-    }
-    return undefined;
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary; checked at runtime.
+function pickRestId(value: any): string | undefined {
+    return typeof value === 'string' && /^\d+$/.test(value) ? value : undefined;
 }
-function findTweetId(node: unknown): string | undefined {
-    if (!node || typeof node !== 'object') {
-        return undefined;
-    }
-    const obj = node as Record<string, unknown>;
-    const tweetResults = obj.tweet_results as { result?: { rest_id?: string } } | undefined;
-    if (tweetResults?.result?.rest_id) {
-        return tweetResults.result.rest_id;
-    }
-    for (const value of Object.values(obj)) {
-        if (value && typeof value === 'object') {
-            const found = findTweetId(value);
-            if (found) {
-                return found;
-            }
-        }
-    }
-    return undefined;
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary.
+function extractArticleEntityId(data: any): string | undefined {
+    return (pickRestId(data?.articleentity_create_draft?.article_entity_results?.result?.rest_id) ??
+        pickRestId(data?.articleentity_publish?.article_entity_results?.result?.rest_id) ??
+        pickRestId(data?.articleentity_update_title?.rest_id) ??
+        pickRestId(data?.articleentity_update_content_state?.rest_id));
+}
+// biome-ignore lint/suspicious/noExplicitAny: graphql response shapes vary.
+function extractPublishedTweetId(data: any): string | undefined {
+    return pickRestId(data?.articleentity_publish?.article_entity_results?.result?.metadata?.tweet_results?.result?.rest_id);
 }
 export function withArticles<TBase extends AbstractConstructor<TwitterClientBase>>(Base: TBase): Mixin<TBase, TwitterClientArticleMethods> {
     abstract class TwitterClientArticles extends Base {
@@ -112,7 +95,7 @@ export function withArticles<TBase extends AbstractConstructor<TwitterClientBase
             if (!result.success || !result.data) {
                 return { success: false, error: result.error ?? 'Draft create failed without error' };
             }
-            const articleEntityId = findRestId(result.data);
+            const articleEntityId = extractArticleEntityId(result.data);
             if (!articleEntityId) {
                 return { success: false, error: `Draft create response missing rest_id: ${JSON.stringify(result.data).slice(0, 300)}` };
             }
@@ -130,8 +113,51 @@ export function withArticles<TBase extends AbstractConstructor<TwitterClientBase
             if (!result.success) {
                 return { success: false, error: result.error };
             }
-            const tweetId = findTweetId(result.data) ?? findRestId(result.data);
+            const tweetId = extractPublishedTweetId(result.data);
             return { success: true, data: { articleEntityId, tweetId } };
+        }
+        async getUserArticles(userId: string, options: UserArticlesOptions = {}): Promise<SearchResult> {
+            const { count = 20, cursor, includeRaw = false } = options;
+            const variables: Record<string, unknown> = {
+                userId,
+                count,
+                includePromotedContent: false,
+                withVoice: true,
+                withQuickPromoteEligibilityTweetFields: true,
+                withBirdwatchNotes: true,
+                withCommunity: true,
+                withSafetyModeUserFields: true,
+                withSuperFollowsUserFields: true,
+                withDownvotePerspective: false,
+                withReactionsMetadata: false,
+                withReactionsPerspective: false,
+                withSuperFollowsTweetFields: true,
+                withSuperFollowsReplyCount: false,
+                withClientEventToken: false,
+                ...(cursor ? { cursor } : {}),
+            };
+            const params = new URLSearchParams({
+                variables: JSON.stringify(variables),
+                features: JSON.stringify(buildArticleFeatures()),
+                fieldToggles: JSON.stringify({ ...buildArticleFieldToggles(), withArticlePlainText: true, withArticleRichContentState: true }),
+            });
+            const queryId = await this.getQueryId('UserArticlesTweets');
+            const url = `${TWITTER_API_BASE}/${queryId}/UserArticlesTweets?${params.toString()}`;
+            try {
+                const response = await this.fetchWithTimeout(url, { method: 'GET', headers: this.getHeaders() });
+                if (!response.ok) {
+                    return { success: false, error: `HTTP ${response.status}: ${(await response.text()).slice(0, 200)}` };
+                }
+                // biome-ignore lint/suspicious/noExplicitAny: graphql response shape.
+                const data = (await response.json()) as any;
+                const instructions = data?.data?.user?.result?.timeline?.timeline?.instructions ?? [];
+                const tweets = parseTweetsFromInstructions(instructions, { quoteDepth: 0, includeRaw });
+                const nextCursor = extractCursorFromInstructions(instructions, 'Bottom');
+                return { success: true, tweets, nextCursor, ...(includeRaw ? { _raw: data } : {}) };
+            }
+            catch (error) {
+                return { success: false, error: error instanceof Error ? error.message : String(error) };
+            }
         }
     }
     return TwitterClientArticles as unknown as Mixin<TBase, TwitterClientArticleMethods>;

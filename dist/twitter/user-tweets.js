@@ -45,7 +45,8 @@ export function withUserTweets(Base) {
                     ...(pageCursor ? { cursor: pageCursor } : {}),
                 };
                 const fieldToggles = {
-                    withArticlePlainText: false,
+                    withArticlePlainText: true,
+                    withArticleRichContentState: true,
                 };
                 const params = new URLSearchParams({
                     variables: JSON.stringify(variables),
