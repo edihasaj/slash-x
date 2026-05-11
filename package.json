@@ -1,6 +1,6 @@
 {
   "name": "slash-x",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Local X/Twitter CLI for posting, replying, and reading from the command line",
   "license": "MIT",
   "author": "Edi Hasaj <edihasaj@gmail.com> (https://github.com/edihasaj)",

@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises';
+import { extractArticleFromMarkdown, markdownToContentState } from '../lib/markdown-to-draftjs.js';
 import { formatTweetUrlLine } from '../lib/output.js';
 import { TwitterClient } from '../twitter/client.js';
 async function uploadMediaOrExit(client, media, ctx) {
@@ -58,10 +59,10 @@ export function registerPostCommands(parent, ctx, root) {
         }
     });
     parent
-        .command('article')
-        .description('Post a long-form X article (Premium long post, up to 25k chars)')
-        .argument('[text]', 'Article body (or use --file)')
-        .option('-f, --file <path>', 'Read article body from a file (e.g. a markdown post)')
+        .command('long')
+        .description('Post a long-form post via CreateNoteTweet (Premium plain-text, up to 25k chars)')
+        .argument('[text]', 'Post body (or use --file)')
+        .option('-f, --file <path>', 'Read body from a file')
         .action(async (text, cmdOpts) => {
         const opts = optsSource.opts();
         const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
@@ -77,11 +78,11 @@ export function registerPostCommands(parent, ctx, root) {
             }
         }
         if (!body || body.trim().length === 0) {
-            console.error(`${ctx.p('err')}Article body is empty. Provide <text> or --file <path>.`);
+            console.error(`${ctx.p('err')}Body is empty. Provide <text> or --file <path>.`);
             process.exit(1);
         }
         if (body.length > 25000) {
-            console.error(`${ctx.p('err')}Article body is ${body.length} chars; X limit is 25000.`);
+            console.error(`${ctx.p('err')}Body is ${body.length} chars; X limit is 25000.`);
             process.exit(1);
         }
         let media = [];
@@ -103,17 +104,99 @@ export function registerPostCommands(parent, ctx, root) {
         if (cookies.source) {
             console.error(`${ctx.l('source')}${cookies.source}`);
         }
-        console.error(`${ctx.p('info')}Posting article (${body.length} chars)…`);
+        console.error(`${ctx.p('info')}Posting long post (${body.length} chars)…`);
         const client = new TwitterClient({ cookies, timeoutMs, quoteDepth });
         const mediaIds = await uploadMediaOrExit(client, media, ctx);
         const result = await client.noteTweet(body, mediaIds);
         if (result.success) {
-            console.log(`${ctx.p('ok')}Article posted successfully!`);
+            console.log(`${ctx.p('ok')}Long post published!`);
             console.log(formatTweetUrlLine(result.tweetId, ctx.getOutput()));
         }
         else {
-            console.error(`${ctx.p('err')}Failed to post article: ${result.error}`);
+            console.error(`${ctx.p('err')}Failed to post: ${result.error}`);
             process.exit(1);
+        }
+    });
+    parent
+        .command('article')
+        .description('Publish a rich X Article (Premium+; title + Draft.js body via ArticleEntity mutations)')
+        .argument('[body]', 'Article body in markdown (or use --file)')
+        .option('-f, --file <path>', 'Read article markdown from a file')
+        .option('-t, --title <title>', 'Article title (otherwise extracted from first `# heading` of the markdown)')
+        .option('--visibility <setting>', 'Article visibility: Public, Followers, Subscribers, MentionedUsers, CommunityTweet', 'Public')
+        .option('--conversation <mode>', 'Reply control: All, ByInvitation, Community, Verified, Subscribers, Following', 'ByInvitation')
+        .option('--dry-run', 'Convert markdown to Draft.js content_state and print it; do not call X.', false)
+        .action(async (bodyArg, cmdOpts) => {
+        const opts = optsSource.opts();
+        const timeoutMs = ctx.resolveTimeoutFromOptions(opts);
+        const quoteDepth = ctx.resolveQuoteDepthFromOptions(opts);
+        let source = bodyArg;
+        if (cmdOpts.file) {
+            try {
+                source = await readFile(cmdOpts.file, 'utf8');
+            }
+            catch (error) {
+                console.error(`${ctx.p('err')}Failed to read file: ${error instanceof Error ? error.message : String(error)}`);
+                process.exit(1);
+            }
+        }
+        if (!source || source.trim().length === 0) {
+            console.error(`${ctx.p('err')}Article source is empty. Provide <body> or --file <path>.`);
+            process.exit(1);
+        }
+        const { title, body } = extractArticleFromMarkdown(source, cmdOpts.title);
+        if (!title) {
+            console.error(`${ctx.p('err')}Article title is missing. Pass --title <title> or include a # heading in the markdown.`);
+            process.exit(1);
+        }
+        const contentState = markdownToContentState(body);
+        if (cmdOpts.dryRun) {
+            console.log(JSON.stringify({ title, content_state: contentState }, null, 2));
+            return;
+        }
+        const { cookies, warnings } = await ctx.resolveCredentialsFromOptions(opts);
+        for (const warning of warnings) {
+            console.error(`${ctx.p('warn')}${warning}`);
+        }
+        if (!cookies.authToken || !cookies.ct0) {
+            console.error(`${ctx.p('err')}Missing required credentials`);
+            process.exit(1);
+        }
+        if (cookies.source) {
+            console.error(`${ctx.l('source')}${cookies.source}`);
+        }
+        console.error(`${ctx.p('info')}Publishing article: "${title}" (${contentState.blocks.length} blocks)`);
+        const client = new TwitterClient({ cookies, timeoutMs, quoteDepth });
+        const draft = await client.articleDraftCreate();
+        if (!draft.success || !draft.data) {
+            console.error(`${ctx.p('err')}Draft create failed: ${draft.error}`);
+            process.exit(1);
+        }
+        const { articleEntityId } = draft.data;
+        console.error(`${ctx.p('info')}Draft created (id ${articleEntityId}); setting title…`);
+        const titleResult = await client.articleUpdateTitle(articleEntityId, title);
+        if (!titleResult.success) {
+            console.error(`${ctx.p('err')}Title update failed: ${titleResult.error}`);
+            process.exit(1);
+        }
+        console.error(`${ctx.p('info')}Title set; uploading body…`);
+        const contentResult = await client.articleUpdateContent(articleEntityId, contentState);
+        if (!contentResult.success) {
+            console.error(`${ctx.p('err')}Content update failed: ${contentResult.error}`);
+            process.exit(1);
+        }
+        console.error(`${ctx.p('info')}Body uploaded; publishing…`);
+        const publishResult = await client.articlePublish(articleEntityId, cmdOpts.visibility, cmdOpts.conversation);
+        if (!publishResult.success || !publishResult.data) {
+            console.error(`${ctx.p('err')}Publish failed: ${publishResult.error}`);
+            process.exit(1);
+        }
+        console.log(`${ctx.p('ok')}Article published!`);
+        if (publishResult.data.tweetId) {
+            console.log(formatTweetUrlLine(publishResult.data.tweetId, ctx.getOutput()));
+        }
+        else {
+            console.log(`${ctx.p('info')}articleEntityId: ${publishResult.data.articleEntityId}`);
         }
     });
     parent

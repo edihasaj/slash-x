@@ -1,3 +1,4 @@
+export declare function buildArticleEntityFeatures(): Record<string, boolean>;
 export declare function buildArticleFeatures(): Record<string, boolean>;
 export declare function buildTweetDetailFeatures(): Record<string, boolean>;
 export declare function buildArticleFieldToggles(): Record<string, boolean>;

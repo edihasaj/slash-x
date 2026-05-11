@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.2.0
+
+- Added `slash article` for publishing real X Articles (Premium+). Drives the four-step `ArticleEntityDraftCreate` → `ArticleEntityUpdateTitle` → `ArticleEntityUpdateContent` → `ArticleEntityPublish` pipeline against x.com's GraphQL endpoints, with `--title`, `--visibility`, `--conversation`, and `--dry-run` flags.
+- Added a markdown → Draft.js content_state converter (`src/lib/markdown-to-draftjs.ts`) supporting paragraphs, `#`/`##`/`###` headings, `>` blockquotes, and `-`/`1.` lists; also strips YAML frontmatter and auto-extracts a title from the first `# heading` when one isn't passed.
+- Renamed the v1.1.0 `slash article` (CreateNoteTweet long post) to `slash long` / `slash post long`, since `article` is now the rich Article path.
+- Added a new `TwitterClientArticles` mixin and corresponding query IDs / features so the existing query-id refresh keeps the article mutations in sync with x.com bundles.
+
 ## 1.1.0
 
 - Added `slash article` (and `slash post article`) for posting long-form X articles via the `CreateNoteTweet` GraphQL mutation. Premium subscribers can post up to 25,000 characters, with `--file` for reading the body from disk and `--media` for attaching a lead image.

@@ -23,6 +23,10 @@ export function registerQueryIdsCommand(program, ctx) {
         const operations = [
             'CreateTweet',
             'CreateNoteTweet',
+            'ArticleEntityDraftCreate',
+            'ArticleEntityUpdateTitle',
+            'ArticleEntityUpdateContent',
+            'ArticleEntityPublish',
             'CreateRetweet',
             'FavoriteTweet',
             'TweetDetail',

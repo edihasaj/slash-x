@@ -25,6 +25,10 @@ export function registerQueryIdsCommand(program: Command, ctx: CliContext): void
         const operations = [
             'CreateTweet',
             'CreateNoteTweet',
+            'ArticleEntityDraftCreate',
+            'ArticleEntityUpdateTitle',
+            'ArticleEntityUpdateContent',
+            'ArticleEntityPublish',
             'CreateRetweet',
             'FavoriteTweet',
             'TweetDetail',

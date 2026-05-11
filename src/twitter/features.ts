@@ -1,4 +1,14 @@
 import { applyFeatureOverrides } from '../runtime/features.js';
+export function buildArticleEntityFeatures(): Record<string, boolean> {
+    return applyFeatureOverrides('articleEntity', {
+        profile_label_improvements_pcf_label_in_post_enabled: true,
+        responsive_web_profile_redirect_enabled: false,
+        rweb_tipjar_consumption_enabled: false,
+        verified_phone_label_enabled: false,
+        responsive_web_graphql_skip_user_profile_image_extensions_enabled: false,
+        responsive_web_graphql_timeline_navigation_enabled: true,
+    });
+}
 export function buildArticleFeatures(): Record<string, boolean> {
     return applyFeatureOverrides('article', {
         rweb_video_screen_enabled: true,

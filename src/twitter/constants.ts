@@ -13,6 +13,10 @@ export const SETTINGS_NAME_REGEX = /"name":"([^"\\]*(?:\\.[^"\\]*)*)"/;
 export const FALLBACK_QUERY_IDS = {
     CreateTweet: 'TAJw1rBsjAtdNgTdlo2oeg',
     CreateNoteTweet: 'zWKo-6rC5Hf5auLKO4Wduw',
+    ArticleEntityDraftCreate: 'g1l5N8BxGewYuCy5USe_bQ',
+    ArticleEntityUpdateTitle: 'x75E2ABzm8_mGTg1bz8hcA',
+    ArticleEntityUpdateContent: 'M7N2FrPrlOmu-YrVIBxFnQ',
+    ArticleEntityPublish: 'm4SHicYMoWO_qkLvjhDk7Q',
     CreateRetweet: 'ojPdsZsimiJrUGLR1sjUtA',
     DeleteRetweet: 'iQtK4dl5hBmXewYZuEOKVw',
     CreateFriendship: '8h9JVdV8dlSyqyRDJEPCsA',

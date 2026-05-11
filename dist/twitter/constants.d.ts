@@ -9,6 +9,10 @@ export declare const SETTINGS_NAME_REGEX: RegExp;
 export declare const FALLBACK_QUERY_IDS: {
     readonly CreateTweet: "TAJw1rBsjAtdNgTdlo2oeg";
     readonly CreateNoteTweet: "zWKo-6rC5Hf5auLKO4Wduw";
+    readonly ArticleEntityDraftCreate: "g1l5N8BxGewYuCy5USe_bQ";
+    readonly ArticleEntityUpdateTitle: "x75E2ABzm8_mGTg1bz8hcA";
+    readonly ArticleEntityUpdateContent: "M7N2FrPrlOmu-YrVIBxFnQ";
+    readonly ArticleEntityPublish: "m4SHicYMoWO_qkLvjhDk7Q";
     readonly CreateRetweet: "ojPdsZsimiJrUGLR1sjUtA";
     readonly DeleteRetweet: "iQtK4dl5hBmXewYZuEOKVw";
     readonly CreateFriendship: "8h9JVdV8dlSyqyRDJEPCsA";
