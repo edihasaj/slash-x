@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.1.0
+
+- Added `slash article` (and `slash post article`) for posting long-form X articles via the `CreateNoteTweet` GraphQL mutation. Premium subscribers can post up to 25,000 characters, with `--file` for reading the body from disk and `--media` for attaching a lead image.
+- `createTweet` mutation caller is parameterized by operation name; response parser handles both `create_tweet` and `notetweet_create` result branches.
+- `CreateNoteTweet` queryId added to discovery list and fallback table, so cache refresh keeps it in sync with x.com client bundles.
+
 ## 1.0.0
 
 First stable release. Drops the `-local.*` pre-release line; future versions follow standard semver from here.

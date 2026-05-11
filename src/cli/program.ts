@@ -71,7 +71,7 @@ export function createProgram(ctx: CliContext): Command {
     const formatExample = (command: string, description: string): string => `${ctx.colors.command(`  ${command}`)}\n${ctx.colors.muted(`    ${description}`)}`;
     const groupedHelp = (): string => {
         const groups: Array<{ title: string; lines: string[] }> = [
-            { title: 'Writing', lines: ['post tweet <text>          Post a new tweet (alias: tweet)', 'post reply <id> <text>     Reply to a tweet (alias: reply)'] },
+            { title: 'Writing', lines: ['post tweet <text>          Post a new tweet (alias: tweet)', 'post reply <id> <text>     Reply to a tweet (alias: reply)', 'post article [text|--file] Post a long-form article (Premium, 25k chars)'] },
             { title: 'Reading', lines: ['read <id-or-url>           Read a tweet', 'thread <id-or-url>         Show full conversation', 'replies <id-or-url>        List replies'] },
             { title: 'Discovery', lines: ['search <query>             Search tweets', 'mentions                   Tweets mentioning you', 'trending                   Trending + AI-curated news (alias: news)'] },
             { title: 'Feeds', lines: ['home                       Your "For You" timeline', 'bookmarks                  Your bookmarks', 'likes                      Your likes'] },

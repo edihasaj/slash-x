@@ -5,6 +5,7 @@ import type { CreateTweetResponse, TweetResult } from './types.js';
 export interface TwitterClientPostingMethods {
     tweet(text: string, mediaIds?: string[]): Promise<TweetResult>;
     reply(text: string, replyToTweetId: string, mediaIds?: string[]): Promise<TweetResult>;
+    noteTweet(text: string, mediaIds?: string[]): Promise<TweetResult>;
 }
 export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>>(Base: TBase): Mixin<TBase, TwitterClientPostingMethods> {
     abstract class TwitterClientPosting extends Base {
@@ -43,10 +44,24 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
             const features = buildTweetCreateFeatures();
             return this.createTweet(variables, features);
         }
-        async createTweet(variables: Record<string, unknown>, features: Record<string, boolean>): Promise<TweetResult> {
+        async noteTweet(text: string, mediaIds?: string[]): Promise<TweetResult> {
+            const variables = {
+                tweet_text: text,
+                dark_request: false,
+                media: {
+                    media_entities: (mediaIds ?? []).map((id) => ({ media_id: id, tagged_users: [] })),
+                    possibly_sensitive: false,
+                },
+                semantic_annotation_ids: [],
+                richtext_options: { richtext_tags: [] },
+            };
+            const features = buildTweetCreateFeatures();
+            return this.createTweet(variables, features, 'CreateNoteTweet');
+        }
+        async createTweet(variables: Record<string, unknown>, features: Record<string, boolean>, operationName: 'CreateTweet' | 'CreateNoteTweet' = 'CreateTweet'): Promise<TweetResult> {
             await this.ensureClientUserId();
-            let queryId = await this.getQueryId('CreateTweet');
-            let urlWithOperation = `${TWITTER_API_BASE}/${queryId}/CreateTweet`;
+            let queryId = await this.getQueryId(operationName);
+            let urlWithOperation = `${TWITTER_API_BASE}/${queryId}/${operationName}`;
             const buildBody = (): string => JSON.stringify({ variables, features, queryId });
             let body = buildBody();
             const buildHeaders = async (url: string): Promise<Record<string, string>> => this.withTransactionId({ ...this.getHeaders(), referer: 'https://x.com/compose/post' }, 'POST', url);
@@ -56,10 +71,11 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
                     headers: await buildHeaders(urlWithOperation),
                     body,
                 });
+                const extractTweetId = (data: CreateTweetResponse): string | undefined => data.data?.create_tweet?.tweet_results?.result?.rest_id ?? data.data?.notetweet_create?.tweet_results?.result?.rest_id;
                 if (response.status === 404) {
                     await this.refreshQueryIds();
-                    queryId = await this.getQueryId('CreateTweet');
-                    urlWithOperation = `${TWITTER_API_BASE}/${queryId}/CreateTweet`;
+                    queryId = await this.getQueryId(operationName);
+                    urlWithOperation = `${TWITTER_API_BASE}/${queryId}/${operationName}`;
                     body = buildBody();
                     response = await this.fetchWithTimeout(urlWithOperation, {
                         method: 'POST',
@@ -80,7 +96,7 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
                         if (data.errors && data.errors.length > 0) {
                             return { success: false, error: this.formatErrors(data.errors) };
                         }
-                        const tweetId = data.data?.create_tweet?.tweet_results?.result?.rest_id;
+                        const tweetId = extractTweetId(data);
                         if (tweetId) {
                             return { success: true, tweetId };
                         }
@@ -101,7 +117,7 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
                         error: this.formatErrors(data.errors),
                     };
                 }
-                const tweetId = data.data?.create_tweet?.tweet_results?.result?.rest_id;
+                const tweetId = extractTweetId(data);
                 if (tweetId) {
                     return {
                         success: true,

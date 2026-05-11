@@ -22,6 +22,7 @@ export function registerQueryIdsCommand(program, ctx) {
         .action(async (cmdOpts) => {
         const operations = [
             'CreateTweet',
+            'CreateNoteTweet',
             'CreateRetweet',
             'FavoriteTweet',
             'TweetDetail',

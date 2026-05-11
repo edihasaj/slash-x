@@ -8,6 +8,7 @@ export declare const SETTINGS_USER_ID_REGEX: RegExp;
 export declare const SETTINGS_NAME_REGEX: RegExp;
 export declare const FALLBACK_QUERY_IDS: {
     readonly CreateTweet: "TAJw1rBsjAtdNgTdlo2oeg";
+    readonly CreateNoteTweet: "zWKo-6rC5Hf5auLKO4Wduw";
     readonly CreateRetweet: "ojPdsZsimiJrUGLR1sjUtA";
     readonly DeleteRetweet: "iQtK4dl5hBmXewYZuEOKVw";
     readonly CreateFriendship: "8h9JVdV8dlSyqyRDJEPCsA";

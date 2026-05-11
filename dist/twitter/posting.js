@@ -37,10 +37,24 @@ export function withPosting(Base) {
             const features = buildTweetCreateFeatures();
             return this.createTweet(variables, features);
         }
-        async createTweet(variables, features) {
+        async noteTweet(text, mediaIds) {
+            const variables = {
+                tweet_text: text,
+                dark_request: false,
+                media: {
+                    media_entities: (mediaIds ?? []).map((id) => ({ media_id: id, tagged_users: [] })),
+                    possibly_sensitive: false,
+                },
+                semantic_annotation_ids: [],
+                richtext_options: { richtext_tags: [] },
+            };
+            const features = buildTweetCreateFeatures();
+            return this.createTweet(variables, features, 'CreateNoteTweet');
+        }
+        async createTweet(variables, features, operationName = 'CreateTweet') {
             await this.ensureClientUserId();
-            let queryId = await this.getQueryId('CreateTweet');
-            let urlWithOperation = `${TWITTER_API_BASE}/${queryId}/CreateTweet`;
+            let queryId = await this.getQueryId(operationName);
+            let urlWithOperation = `${TWITTER_API_BASE}/${queryId}/${operationName}`;
             const buildBody = () => JSON.stringify({ variables, features, queryId });
             let body = buildBody();
             const buildHeaders = async (url) => this.withTransactionId({ ...this.getHeaders(), referer: 'https://x.com/compose/post' }, 'POST', url);
@@ -50,10 +64,11 @@ export function withPosting(Base) {
                     headers: await buildHeaders(urlWithOperation),
                     body,
                 });
+                const extractTweetId = (data) => data.data?.create_tweet?.tweet_results?.result?.rest_id ?? data.data?.notetweet_create?.tweet_results?.result?.rest_id;
                 if (response.status === 404) {
                     await this.refreshQueryIds();
-                    queryId = await this.getQueryId('CreateTweet');
-                    urlWithOperation = `${TWITTER_API_BASE}/${queryId}/CreateTweet`;
+                    queryId = await this.getQueryId(operationName);
+                    urlWithOperation = `${TWITTER_API_BASE}/${queryId}/${operationName}`;
                     body = buildBody();
                     response = await this.fetchWithTimeout(urlWithOperation, {
                         method: 'POST',
@@ -74,7 +89,7 @@ export function withPosting(Base) {
                         if (data.errors && data.errors.length > 0) {
                             return { success: false, error: this.formatErrors(data.errors) };
                         }
-                        const tweetId = data.data?.create_tweet?.tweet_results?.result?.rest_id;
+                        const tweetId = extractTweetId(data);
                         if (tweetId) {
                             return { success: true, tweetId };
                         }
@@ -95,7 +110,7 @@ export function withPosting(Base) {
                         error: this.formatErrors(data.errors),
                     };
                 }
-                const tweetId = data.data?.create_tweet?.tweet_results?.result?.rest_id;
+                const tweetId = extractTweetId(data);
                 if (tweetId) {
                     return {
                         success: true,
