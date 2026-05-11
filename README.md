@@ -1,8 +1,12 @@
-# slash-x
+<p align="center">
+  <img src="assets/logo.png" alt="slash-x logo" width="160" />
+</p>
 
-Edi's local X/Twitter CLI — post, read, search, follow, list.
+<h1 align="center">slash-x</h1>
 
-The command name is `slash`.
+<p align="center">
+  Edi's local X/Twitter CLI — post, read, search, follow, list, and publish long-form Articles. The command name is <code>slash</code>.
+</p>
 
 ## Install
 
@@ -13,7 +17,7 @@ brew install edihasaj/tap/slash-x
 slash --help
 ```
 
-Tap: <https://github.com/edihasaj/homebrew-tap>. Releases publish a Node-based formula automatically when tagged.
+Tap: <https://github.com/edihasaj/homebrew-tap>. Tagged releases auto-publish a Node-backed formula.
 
 ### From source (Node.js 22+)
 
@@ -31,15 +35,18 @@ Source lives in `src/`; `npm run build` runs `tsc` and emits `dist/`. Use `npm r
 ## Common Commands
 
 ```bash
+# Identity & health
 slash whoami
 slash check
+
+# Reading
 slash read <tweet-id-or-url>
 slash <tweet-id-or-url> --json
 slash thread <tweet-id-or-url>
 slash replies <tweet-id-or-url>
 slash search "from:hasajedi" -n 5
 slash mentions -n 5
-slash user-tweets @hasajedi -n 20
+slash user-tweets @hasajedi -n 20      # article tweets show full body inline
 slash bookmarks -n 20
 slash likes -n 20
 
@@ -49,9 +56,42 @@ slash tweet "hello from slash-x"
 slash post reply <tweet-id-or-url> "nice thread"
 slash reply <tweet-id-or-url> "nice thread"
 
-slash trending -n 10        # alias: slash news
+# Discovery
+slash trending -n 10                    # alias: slash news
+
+# Maintenance
 slash query-ids --fresh
 ```
+
+## Long-form & Articles
+
+slash-x can publish two flavors of long-form post on X (Premium account required):
+
+```bash
+# Long post (CreateNoteTweet) — Premium, plain text, up to 25k chars
+slash long --file ./essay.txt
+slash long "a single really long thought"
+
+# Real X Article (Premium+) — Draft.js body via ArticleEntity mutations
+# Title auto-extracted from the first `# heading` of the markdown
+slash article --file ./posts/security-in-the-age-of-ai-coders.md
+slash article "body markdown..." --title "Custom title"
+
+# Stage a draft (create + title + body) without publishing — review in X drafts
+slash article --file ./essay.md --draft
+
+# Dry-run the markdown → Draft.js content_state conversion (no network)
+slash article --file ./essay.md --dry-run
+
+# Control visibility and reply policy
+slash article --file ./essay.md --visibility Public --conversation ByInvitation
+
+# Browse your own articles (or someone else's)
+slash articles                          # your published articles
+slash articles @hasajedi -n 50
+```
+
+Supported markdown for `slash article`: paragraphs, `#`/`##`/`###` headings, `>` blockquotes, `-`/`1.` lists. YAML frontmatter is stripped automatically.
 
 ## Auth
 
@@ -127,9 +167,9 @@ SLASH_DEBUG_BOOKMARKS
 src/
   cli.ts                 # entry
   cli/                   # program, shared, pagination
-  commands/              # one file per command
-  twitter/               # GraphQL client (mixin cluster)
-  lib/                   # cookies, output, paginate-cursor, etc.
+  commands/              # one file per command (incl. articles)
+  twitter/               # GraphQL client (mixin cluster) — articles, posting, timelines, …
+  lib/                   # cookies, output, markdown→draftjs, paginate-cursor, …
   lib/extract/           # ID extractors
   runtime/               # query-ids + features refresh
   data/                  # baked-in JSON (query-ids, features)
@@ -142,8 +182,8 @@ src/
 Tag `vX.Y.Z` and push:
 
 ```bash
-git tag v0.9.0
-git push origin v0.9.0
+git tag v1.2.0
+git push origin v1.2.0
 ```
 
 The `Release` workflow:
@@ -164,4 +204,4 @@ The local formula template lives at `packaging/homebrew/Formula/slash-x.rb.templ
 
 ## Author
 
-Edi Hasaj (https://edihasaj.com)
+Edi Hasaj (<https://edihasaj.com>)
