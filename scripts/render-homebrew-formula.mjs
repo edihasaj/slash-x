@@ -19,13 +19,16 @@ console.log(`class SlashX < Formula
   license "MIT"
   version "${version}"
 
-  depends_on "node"
+  # Intentionally no \`depends_on "node"\`: the tarball bundles its own
+  # node_modules, and the wrapper runs whatever node is already on PATH
+  # (e.g. an nvm-managed runtime), so installing slash-x never pulls a
+  # second Node onto the machine.
 
   def install
     libexec.install Dir["*"]
     (bin/"slash").write <<~EOS
       #!/bin/bash
-      exec "#{Formula["node"].opt_bin}/node" "#{libexec}/dist/cli.js" "$@"
+      exec node "#{libexec}/dist/cli.js" "$@"
     EOS
     chmod 0755, bin/"slash"
   end

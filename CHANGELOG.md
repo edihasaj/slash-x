@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.0
+
+- Homebrew formula no longer declares `depends_on "node"`. The release tarball already bundles its own `node_modules`, and the `slash` wrapper now runs whatever `node` is on your PATH (e.g. an nvm-managed runtime). Installing slash-x no longer pulls a second Node runtime onto the machine, avoiding native-module ABI clashes with other toolchains.
+- Docs: added the slash-x logo and documented `slash article`, `slash articles`, and `slash long` in the README.
+
 ## 1.2.0
 
 - Added `slash article` for publishing real X Articles (Premium+). Drives the four-step `ArticleEntityDraftCreate` → `ArticleEntityUpdateTitle` → `ArticleEntityUpdateContent` → `ArticleEntityPublish` pipeline against x.com's GraphQL endpoints, with `--title`, `--visibility`, `--conversation`, `--draft`, and `--dry-run` flags.
