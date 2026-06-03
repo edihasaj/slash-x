@@ -2,8 +2,12 @@ import type { AbstractConstructor, Mixin, TwitterClientBase } from './base.js';
 import { TWITTER_API_BASE, TWITTER_GRAPHQL_POST_URL } from './constants.js';
 import { buildTweetCreateFeatures } from './features.js';
 import type { CreateTweetResponse, TweetResult } from './types.js';
+export interface TweetOptions {
+    /** Quote-tweet target: a tweet URL appended as attachment_url so X renders an embedded quote card. */
+    attachmentUrl?: string;
+}
 export interface TwitterClientPostingMethods {
-    tweet(text: string, mediaIds?: string[]): Promise<TweetResult>;
+    tweet(text: string, mediaIds?: string[], options?: TweetOptions): Promise<TweetResult>;
     reply(text: string, replyToTweetId: string, mediaIds?: string[]): Promise<TweetResult>;
     noteTweet(text: string, mediaIds?: string[]): Promise<TweetResult>;
 }
@@ -14,8 +18,8 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
         constructor(...args: any[]) {
             super(...args);
         }
-        async tweet(text: string, mediaIds?: string[]): Promise<TweetResult> {
-            const variables = {
+        async tweet(text: string, mediaIds?: string[], options?: TweetOptions): Promise<TweetResult> {
+            const variables: Record<string, unknown> = {
                 tweet_text: text,
                 dark_request: false,
                 media: {
@@ -24,6 +28,9 @@ export function withPosting<TBase extends AbstractConstructor<TwitterClientBase>
                 },
                 semantic_annotation_ids: [],
             };
+            if (options?.attachmentUrl) {
+                variables.attachment_url = options.attachmentUrl;
+            }
             const features = buildTweetCreateFeatures();
             return this.createTweet(variables, features);
         }
