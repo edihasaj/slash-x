@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Added `slash repost <id-or-url>` (alias `slash retweet`) to repost a tweet via the `CreateRetweet` mutation, with `--undo` to remove an existing repost (`DeleteRetweet`).
+- Added `slash quote <id-or-url> <text>` for quote-tweets — posts a new tweet with the target appended as `attachment_url` so X renders the embedded quote card. Supports `--media`.
+- `client.tweet()` now accepts an optional `{ attachmentUrl }` to drive quote-tweets.
+
 ## 1.3.0
 
 - Homebrew formula no longer declares `depends_on "node"`. The release tarball already bundles its own `node_modules`, and the `slash` wrapper now runs whatever `node` is on your PATH (e.g. an nvm-managed runtime). Installing slash-x no longer pulls a second Node runtime onto the machine, avoiding native-module ABI clashes with other toolchains.

@@ -7,7 +7,7 @@ export function withPosting(Base) {
         constructor(...args) {
             super(...args);
         }
-        async tweet(text, mediaIds) {
+        async tweet(text, mediaIds, options) {
             const variables = {
                 tweet_text: text,
                 dark_request: false,
@@ -17,6 +17,9 @@ export function withPosting(Base) {
                 },
                 semantic_annotation_ids: [],
             };
+            if (options?.attachmentUrl) {
+                variables.attachment_url = options.attachmentUrl;
+            }
             const features = buildTweetCreateFeatures();
             return this.createTweet(variables, features);
         }

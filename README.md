@@ -56,6 +56,11 @@ slash tweet "hello from slash-x"
 slash post reply <tweet-id-or-url> "nice thread"
 slash reply <tweet-id-or-url> "nice thread"
 
+# Repost & quote
+slash repost <tweet-id-or-url>             # alias: slash retweet
+slash repost <tweet-id-or-url> --undo      # remove your repost
+slash quote <tweet-id-or-url> "my take"    # quote-tweet (supports --media)
+
 # Discovery
 slash trending -n 10                    # alias: slash news
 

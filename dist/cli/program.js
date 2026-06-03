@@ -10,6 +10,7 @@ import { registerArticlesCommand } from '../commands/articles.js';
 import { registerPostCommands } from '../commands/post.js';
 import { registerQueryIdsCommand } from '../commands/query-ids.js';
 import { registerReadCommands } from '../commands/read.js';
+import { registerRepostCommands } from '../commands/repost.js';
 import { registerSearchCommands } from '../commands/search.js';
 import { registerUnbookmarkCommand } from '../commands/unbookmark.js';
 import { registerUserTweetsCommand } from '../commands/user-tweets.js';
@@ -20,6 +21,9 @@ export const KNOWN_COMMANDS = new Set([
     'post',
     'tweet',
     'reply',
+    'repost',
+    'retweet',
+    'quote',
     'query-ids',
     'read',
     'replies',
@@ -72,7 +76,7 @@ export function createProgram(ctx) {
     const formatExample = (command, description) => `${ctx.colors.command(`  ${command}`)}\n${ctx.colors.muted(`    ${description}`)}`;
     const groupedHelp = () => {
         const groups = [
-            { title: 'Writing', lines: ['post tweet <text>          Post a new tweet (alias: tweet)', 'post reply <id> <text>     Reply to a tweet (alias: reply)', 'post long [text|--file]    Post a long-form post (Premium NoteTweet, 25k chars)', 'post article [body|--file] Publish a rich X Article (title + Draft.js body)'] },
+            { title: 'Writing', lines: ['post tweet <text>          Post a new tweet (alias: tweet)', 'post reply <id> <text>     Reply to a tweet (alias: reply)', 'repost <id-or-url>         Repost a tweet (alias: retweet; --undo to remove)', 'quote <id-or-url> <text>   Quote-tweet (repost with a comment)', 'post long [text|--file]    Post a long-form post (Premium NoteTweet, 25k chars)', 'post article [body|--file] Publish a rich X Article (title + Draft.js body)'] },
             { title: 'Reading', lines: ['read <id-or-url>           Read a tweet', 'thread <id-or-url>         Show full conversation', 'replies <id-or-url>        List replies'] },
             { title: 'Discovery', lines: ['search <query>             Search tweets', 'mentions                   Tweets mentioning you', 'trending                   Trending + AI-curated news (alias: news)'] },
             { title: 'Feeds', lines: ['home                       Your "For You" timeline', 'bookmarks                  Your bookmarks', 'likes                      Your likes'] },
@@ -120,6 +124,7 @@ export function createProgram(ctx) {
     registerHelpCommand(program, ctx);
     registerQueryIdsCommand(program, ctx);
     registerPostCommands(program, ctx);
+    registerRepostCommands(program, ctx);
     registerReadCommands(program, ctx);
     registerSearchCommands(program, ctx);
     registerBookmarksCommand(program, ctx);
