@@ -124,6 +124,14 @@ slash --cookie-source safari whoami
 slash --cookie-source firefox --firefox-profile default-release whoami
 ```
 
+Troubleshooting Chrome from SSH/tmux:
+
+```bash
+slash check
+```
+
+If Chrome cookies exist but macOS Keychain reports `Chrome Safe Storage` as blocked, start tmux from a GUI Terminal/iTerm session and approve the Keychain prompt, or use `AUTH_TOKEN` and `CT0` env vars for remote sessions.
+
 ## Config
 
 Global config:

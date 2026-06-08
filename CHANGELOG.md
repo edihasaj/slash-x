@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1
+
+- `slash check` now diagnoses Chrome cookie auth failures on macOS, including cookie DB discovery, `Chrome Safe Storage` Keychain errors, and SSH/tmux session hints.
+- Documented the SSH/tmux workaround for Chrome Keychain access.
+
 ## 1.4.0
 
 - Added `slash repost <id-or-url>` (alias `slash retweet`) to repost a tweet via the `CreateRetweet` mutation, with `--undo` to remove an existing repost (`DeleteRetweet`).
