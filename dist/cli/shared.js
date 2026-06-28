@@ -6,13 +6,13 @@ import kleur from 'kleur';
 import { resolveCredentials } from '../lib/cookies.js';
 import { extractTweetId } from '../lib/extract/tweet-id.js';
 import { hyperlink, labelPrefix, resolveOutputConfigFromArgv, resolveOutputConfigFromCommander, statusPrefix, } from '../lib/output.js';
-const COOKIE_SOURCES = ['safari', 'chrome', 'firefox'];
+const COOKIE_SOURCES = ['safari', 'chrome', 'edge', 'firefox'];
 function parseCookieSource(value) {
     const normalized = value.trim().toLowerCase();
-    if (normalized === 'safari' || normalized === 'chrome' || normalized === 'firefox') {
+    if (normalized === 'safari' || normalized === 'chrome' || normalized === 'edge' || normalized === 'firefox') {
         return normalized;
     }
-    throw new Error(`Invalid --cookie-source "${value}". Allowed: safari, chrome, firefox.`);
+    throw new Error(`Invalid --cookie-source "${value}". Allowed: safari, chrome, edge, firefox.`);
 }
 export const collectCookieSource = (value, previous = []) => {
     previous.push(parseCookieSource(value));
@@ -196,6 +196,7 @@ export function createCliContext(normalizedArgs, env = process.env) {
             ct0: opts.ct0,
             cookieSource,
             chromeProfile,
+            edgeProfile: opts.edgeProfile || config.edgeProfile,
             firefoxProfile: opts.firefoxProfile || config.firefoxProfile,
             cookieTimeoutMs: resolveCookieTimeoutFromOptions(opts),
         });

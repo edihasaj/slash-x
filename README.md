@@ -104,7 +104,7 @@ Supported markdown for `slash article`: paragraphs, `#`/`##`/`###` headings, `>`
 
 1. Flags: `--auth-token`, `--ct0`
 2. Env: `AUTH_TOKEN`, `CT0`, `TWITTER_AUTH_TOKEN`, `TWITTER_CT0`
-3. Browser cookies: Chrome, Safari, Firefox
+3. Browser cookies: Safari, Chrome, Edge, Firefox
 
 Default local config prefers Chrome:
 
@@ -120,6 +120,7 @@ Useful browser flags:
 ```bash
 slash --cookie-source chrome --cookie-timeout 15000 whoami
 slash --cookie-source chrome --chrome-profile "Default" --cookie-timeout 15000 whoami
+slash --cookie-source edge --edge-profile "Default" whoami
 slash --cookie-source safari whoami
 slash --cookie-source firefox --firefox-profile default-release whoami
 ```

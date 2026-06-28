@@ -139,7 +139,7 @@ export function registerCheckCommand(program: Command, ctx: CliContext): void {
         }
         else {
             console.log(`\n${ctx.p('err')}Missing credentials. Options:`);
-            console.log('   1. Login to x.com in Safari/Chrome/Firefox');
+            console.log('   1. Login to x.com in Safari/Chrome/Edge/Firefox');
             console.log('   2. Set AUTH_TOKEN and CT0 environment variables');
             console.log('   3. Use --auth-token and --ct0 flags');
             process.exit(1);

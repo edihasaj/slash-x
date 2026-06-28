@@ -11,6 +11,7 @@ import type { TweetData } from '../twitter/client.js';
 export type BirdConfig = {
     chromeProfile?: string;
     chromeProfileDir?: string;
+    edgeProfile?: string;
     firefoxProfile?: string;
     cookieSource?: CookieSource | CookieSource[];
     cookieTimeoutMs?: number;
@@ -73,17 +74,18 @@ type CredentialsOptions = {
     ct0?: string;
     chromeProfile?: string;
     chromeProfileDir?: string;
+    edgeProfile?: string;
     firefoxProfile?: string;
     cookieSource?: CookieSource[];
     cookieTimeout?: string | number;
 };
-const COOKIE_SOURCES: CookieSource[] = ['safari', 'chrome', 'firefox'];
+const COOKIE_SOURCES: CookieSource[] = ['safari', 'chrome', 'edge', 'firefox'];
 function parseCookieSource(value: string): CookieSource {
     const normalized = value.trim().toLowerCase();
-    if (normalized === 'safari' || normalized === 'chrome' || normalized === 'firefox') {
+    if (normalized === 'safari' || normalized === 'chrome' || normalized === 'edge' || normalized === 'firefox') {
         return normalized;
     }
-    throw new Error(`Invalid --cookie-source "${value}". Allowed: safari, chrome, firefox.`);
+    throw new Error(`Invalid --cookie-source "${value}". Allowed: safari, chrome, edge, firefox.`);
 }
 export const collectCookieSource = (value: string, previous: CookieSource[] = []): CookieSource[] => {
     previous.push(parseCookieSource(value));
@@ -267,6 +269,7 @@ export function createCliContext(normalizedArgs: string[], env: NodeJS.ProcessEn
             ct0: opts.ct0,
             cookieSource,
             chromeProfile,
+            edgeProfile: opts.edgeProfile || config.edgeProfile,
             firefoxProfile: opts.firefoxProfile || config.firefoxProfile,
             cookieTimeoutMs: resolveCookieTimeoutFromOptions(opts),
         });

@@ -5,6 +5,7 @@ import type { TweetData } from '../twitter/client.js';
 export type BirdConfig = {
     chromeProfile?: string;
     chromeProfileDir?: string;
+    edgeProfile?: string;
     firefoxProfile?: string;
     cookieSource?: CookieSource | CookieSource[];
     cookieTimeoutMs?: number;
@@ -67,6 +68,7 @@ type CredentialsOptions = {
     ct0?: string;
     chromeProfile?: string;
     chromeProfileDir?: string;
+    edgeProfile?: string;
     firefoxProfile?: string;
     cookieSource?: CookieSource[];
     cookieTimeout?: string | number;

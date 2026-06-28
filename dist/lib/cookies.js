@@ -1,6 +1,6 @@
 /**
  * Browser cookie extraction for Twitter authentication.
- * Delegates to the vendored cookie helper for Safari/Chrome/Firefox reads.
+ * Delegates to the vendored cookie helper for Safari/Chrome/Edge/Firefox reads.
  */
 import { getCookies } from 'sweet-cookie-local';
 const TWITTER_COOKIE_NAMES = ['auth_token', 'ct0'];
@@ -43,7 +43,7 @@ function resolveSources(cookieSource) {
     if (cookieSource) {
         return [cookieSource];
     }
-    return ['safari', 'chrome', 'firefox'];
+    return ['safari', 'chrome', 'edge', 'firefox'];
 }
 function labelForSource(source, profile) {
     if (source === 'safari') {
@@ -51,6 +51,9 @@ function labelForSource(source, profile) {
     }
     if (source === 'chrome') {
         return profile ? `Chrome profile "${profile}"` : 'Chrome default profile';
+    }
+    if (source === 'edge') {
+        return profile ? `Edge profile "${profile}"` : 'Edge default profile';
     }
     return profile ? `Firefox profile "${profile}"` : 'Firefox default profile';
 }
@@ -79,6 +82,7 @@ async function readTwitterCookiesFromBrowser(options) {
         browsers: [options.source],
         mode: 'merge',
         chromeProfile: options.chromeProfile,
+        edgeProfile: options.edgeProfile,
         firefoxProfile: options.firefoxProfile,
         timeoutMs: options.cookieTimeoutMs,
     });
@@ -102,6 +106,9 @@ async function readTwitterCookiesFromBrowser(options) {
     else if (options.source === 'chrome') {
         warnings.push('No Twitter cookies found in Chrome. Make sure you are logged into x.com in Chrome.');
     }
+    else if (options.source === 'edge') {
+        warnings.push('No Twitter cookies found in Edge. Make sure you are logged into x.com in Edge.');
+    }
     else {
         warnings.push('No Twitter cookies found in Firefox. Make sure you are logged into x.com in Firefox and the profile exists.');
     }
@@ -112,6 +119,9 @@ export async function extractCookiesFromSafari() {
 }
 export async function extractCookiesFromChrome(profile) {
     return readTwitterCookiesFromBrowser({ source: 'chrome', chromeProfile: profile });
+}
+export async function extractCookiesFromEdge(profile) {
+    return readTwitterCookiesFromBrowser({ source: 'edge', edgeProfile: profile });
 }
 export async function extractCookiesFromFirefox(profile) {
     return readTwitterCookiesFromBrowser({ source: 'firefox', firefoxProfile: profile });
@@ -151,6 +161,7 @@ export async function resolveCredentials(options) {
         const res = await readTwitterCookiesFromBrowser({
             source,
             chromeProfile: options.chromeProfile,
+            edgeProfile: options.edgeProfile,
             firefoxProfile: options.firefoxProfile,
             cookieTimeoutMs,
         });
@@ -160,10 +171,10 @@ export async function resolveCredentials(options) {
         }
     }
     if (!cookies.authToken) {
-        warnings.push('Missing auth_token - provide via --auth-token, AUTH_TOKEN env var, or login to x.com in Safari/Chrome/Firefox');
+        warnings.push('Missing auth_token - provide via --auth-token, AUTH_TOKEN env var, or login to x.com in Safari/Chrome/Edge/Firefox');
     }
     if (!cookies.ct0) {
-        warnings.push('Missing ct0 - provide via --ct0, CT0 env var, or login to x.com in Safari/Chrome/Firefox');
+        warnings.push('Missing ct0 - provide via --ct0, CT0 env var, or login to x.com in Safari/Chrome/Edge/Firefox');
     }
     if (cookies.authToken && cookies.ct0) {
         cookies.cookieHeader = cookieHeader(cookies.authToken, cookies.ct0);

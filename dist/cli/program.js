@@ -102,12 +102,13 @@ export function createProgram(ctx) {
     ].join('\n\n')}\n\n${ctx.colors.section('Shortcuts')}\n${[
         formatExample('slash <tweet-id-or-url> [--json]', 'Shorthand for `slash read <tweet-id-or-url>`'),
     ].join('\n\n')}\n\n${ctx.colors.section('JSON Output')}\n${ctx.colors.muted(`  Add ${ctx.colors.option('--json')} to: read, replies, thread, search, mentions, bookmarks, likes, following, followers, about, lists, list-timeline, user-tweets, query-ids`)}\n${ctx.colors.muted(`  Add ${ctx.colors.option('--json-full')} to include raw API response in ${ctx.colors.argument('_raw')} field (tweet commands only)`)}\n${ctx.colors.muted(`  (Run ${ctx.colors.command('slash <command> --help')} to see per-command flags.)`)}`);
-    program.addHelpText('afterAll', () => `\n\n${ctx.colors.section('Config')}\n${ctx.colors.muted(`  Reads ${ctx.colors.argument('~/.config/slash-x/config.json5')} and ${ctx.colors.argument('./.slashrc.json5')} (JSON5)`)}\n${ctx.colors.muted(`  Supports: chromeProfile, chromeProfileDir, firefoxProfile, cookieSource, cookieTimeoutMs, timeoutMs, quoteDepth`)}\n\n${ctx.colors.section('Env')}\n${ctx.colors.muted(`  ${ctx.colors.option('NO_COLOR')}, ${ctx.colors.option('SLASH_TIMEOUT_MS')}, ${ctx.colors.option('SLASH_COOKIE_TIMEOUT_MS')}, ${ctx.colors.option('SLASH_QUOTE_DEPTH')}`)}`);
+    program.addHelpText('afterAll', () => `\n\n${ctx.colors.section('Config')}\n${ctx.colors.muted(`  Reads ${ctx.colors.argument('~/.config/slash-x/config.json5')} and ${ctx.colors.argument('./.slashrc.json5')} (JSON5)`)}\n${ctx.colors.muted(`  Supports: chromeProfile, chromeProfileDir, edgeProfile, firefoxProfile, cookieSource, cookieTimeoutMs, timeoutMs, quoteDepth`)}\n\n${ctx.colors.section('Env')}\n${ctx.colors.muted(`  ${ctx.colors.option('NO_COLOR')}, ${ctx.colors.option('SLASH_TIMEOUT_MS')}, ${ctx.colors.option('SLASH_COOKIE_TIMEOUT_MS')}, ${ctx.colors.option('SLASH_QUOTE_DEPTH')}`)}`);
     program
         .option('--auth-token <token>', 'Twitter auth_token cookie')
         .option('--ct0 <token>', 'Twitter ct0 cookie')
         .option('--chrome-profile <name>', 'Chrome profile name for cookie extraction', ctx.config.chromeProfile)
         .option('--chrome-profile-dir <path>', 'Chrome/Chromium profile directory or cookie DB path for cookie extraction', ctx.config.chromeProfileDir)
+        .option('--edge-profile <name>', 'Edge profile name for cookie extraction', ctx.config.edgeProfile)
         .option('--firefox-profile <name>', 'Firefox profile name for cookie extraction', ctx.config.firefoxProfile)
         .option('--cookie-timeout <ms>', 'Cookie extraction timeout in milliseconds (keychain/OS helpers)')
         .option('--cookie-source <source>', 'Cookie source for browser cookie extraction (repeatable)', collectCookieSource)
