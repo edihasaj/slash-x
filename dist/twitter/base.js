@@ -99,7 +99,10 @@ export class TwitterClientBase {
                     this.clientTransaction = transaction;
                     return transaction;
                 }
-                catch {
+                catch (err) {
+                    if (process.env.SLASH_DEBUG) {
+                        console.error('[slash-debug] ClientTransaction.create failed:', err instanceof Error ? err.stack || err.message : String(err));
+                    }
                     this.clientTransactionPromise = undefined;
                     return null;
                 }
@@ -110,12 +113,22 @@ export class TwitterClientBase {
     async generateTransactionId(method, path) {
         const transaction = await this.getClientTransaction();
         if (!transaction) {
+            if (process.env.SLASH_DEBUG) {
+                console.error(`[slash-debug] no ClientTransaction -> RANDOM txid fallback for ${method} ${path} (writes will be silently dropped by x)`);
+            }
             return this.createTransactionId();
         }
         try {
-            return await transaction.generateTransactionId(method.toUpperCase(), path);
+            const tid = await transaction.generateTransactionId(method.toUpperCase(), path);
+            if (process.env.SLASH_DEBUG) {
+                console.error(`[slash-debug] real txid for ${method} ${path}: ${tid.slice(0, 12)}...`);
+            }
+            return tid;
         }
-        catch {
+        catch (err) {
+            if (process.env.SLASH_DEBUG) {
+                console.error('[slash-debug] generateTransactionId failed -> RANDOM fallback:', err instanceof Error ? err.message : String(err));
+            }
             return this.createTransactionId();
         }
     }
