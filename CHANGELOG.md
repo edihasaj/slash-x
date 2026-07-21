@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.2
+
+- Fixed posting (tweets, replies, quotes, reposts) silently failing. `x-client-transaction-id` was pinned to `0.2.3`, which could no longer resolve x.com's ondemand chunk URL from the homepage runtime (`OnDemandFileUrlResolutionError`) and fell back to a random `x-client-transaction-id`. x tolerates a bogus txid on reads but silently drops writes (`CreateTweet` returns an empty `tweet_results`), so posts never landed. Bumped to `0.3.1` to restore valid transaction-id generation.
+- Added `SLASH_DEBUG=1` diagnostics around transaction-id acquisition so future x runtime changes are one env var away from a clear signal.
+- Added `scripts/persist-tokens.mjs` to extract the current Chrome x.com cookies into `~/.profile` (`AUTH_TOKEN`/`CT0`) for headless use where the keychain is unavailable (e.g. an agent running in a Background launchd session).
+
 ## 1.4.1
 
 - `slash check` now diagnoses Chrome cookie auth failures on macOS, including cookie DB discovery, `Chrome Safe Storage` Keychain errors, and SSH/tmux session hints.
