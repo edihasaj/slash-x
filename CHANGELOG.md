@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.4.3
+
+- Housekeeping release: verified the TypeScript build compiles cleanly offline (`npm run build` / `tsc --noEmit`), synced `package-lock.json` to the current version, and ignored stray `.DS_Store` files. No runtime behavior changes.
+
 ## 1.4.2
 
 - Fixed posting (tweets, replies, quotes, reposts) silently failing. `x-client-transaction-id` was pinned to `0.2.3`, which could no longer resolve x.com's ondemand chunk URL from the homepage runtime (`OnDemandFileUrlResolutionError`) and fell back to a random `x-client-transaction-id`. x tolerates a bogus txid on reads but silently drops writes (`CreateTweet` returns an empty `tweet_results`), so posts never landed. Bumped to `0.3.1` to restore valid transaction-id generation.
