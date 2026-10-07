@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.4
+
+- Posting responses without an ID now report that creation was not confirmed,
+  rather than claiming the tweet was created. This covers tweets, replies,
+  quotes, long posts, and the fallback after stale query IDs.
+- Added offline posting tests and made them a release requirement.
+
 ## 1.4.3
 
 - Housekeeping release: verified the TypeScript build compiles cleanly offline (`npm run build` / `tsc --noEmit`), synced `package-lock.json` to the current version, and ignored stray `.DS_Store` files. No runtime behavior changes.

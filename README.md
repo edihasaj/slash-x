@@ -191,6 +191,10 @@ src/
 
 `tsc` builds to `dist/`; `bin: dist/cli.js` is what `slash` resolves to.
 
+Run `npm test` to build and test posting with mocked responses. A posting
+response without an ID reports that creation was not confirmed. Check X
+before retrying; an HTTP success alone does not confirm a published post.
+
 ## Release
 
 Tag `vX.Y.Z` and push:

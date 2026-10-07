@@ -96,7 +96,7 @@ export function withPosting(Base) {
                         if (tweetId) {
                             return { success: true, tweetId };
                         }
-                        return { success: false, error: 'Tweet created but no ID returned' };
+                        return { success: false, error: 'Tweet creation was not confirmed: no ID returned. Check X before retrying.' };
                     }
                 }
                 if (!response.ok) {
@@ -122,7 +122,7 @@ export function withPosting(Base) {
                 }
                 return {
                     success: false,
-                    error: 'Tweet created but no ID returned',
+                    error: 'Tweet creation was not confirmed: no ID returned. Check X before retrying.',
                 };
             }
             catch (error) {

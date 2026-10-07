@@ -1,6 +1,6 @@
 {
   "name": "slash-x",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Local X/Twitter CLI for posting, replying, and reading from the command line",
   "license": "MIT",
   "author": "Edi Hasaj <edihasaj@gmail.com> (https://github.com/edihasaj)",
@@ -31,6 +31,7 @@
     "start": "node dist/cli.js",
     "slash": "node dist/cli.js",
     "check": "node dist/cli.js --help",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "clean": "rm -rf dist",
